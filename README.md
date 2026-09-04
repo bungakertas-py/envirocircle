@@ -32,7 +32,26 @@ menyajikan frame kemarin dan orang mengira pipeline-nya rusak.
 **Jangan buka lewat `file://`.** Browser memblokir pemuatan data dari sana, dan
 app-nya memang sudah dibuat untuk menolak dengan pesan yang jelas.
 
-## Salinan ini sengaja TANPA data
+## Data, keadaan sekarang
+
+Pohon ini tidak membawa keluaran pipeline sama sekali, dan itu disengaja,
+ukurannya ratusan MB. Tapi supaya petanya tetap berisi, untuk sementara
+datanya **ditumpang dari keluaran repo lama** yang masih hidup dan masih
+diperbarui tiap hari.
+
+```
+atmosight/app.js    DATA_JAUH -> .../atmosight/backend/data/output/
+smokewatch/app.js   DATA_JAUH -> .../smokewatch/backend/data/output/
+```
+
+Ini TAMBALAN, bukan susunan akhir. Begitu pipeline jalan di server sendiri,
+**kosongkan `DATA_JAUH`** di kedua berkas itu, dan dua duanya otomatis balik
+memakai path relatif ke `backend/*/data/output/`. Tidak ada yang lain yang
+perlu diubah.
+
+Selama masih menumpang, jangan matikan repo lama `atmosight` dan `smokewatch`.
+
+## Kalau DATA_JAUH dikosongkan
 
 Kedua app akan terbuka dalam **mode kosong**. Peta, basemap, panel, dan seluruh
 antarmukanya jalan normal, yang belum ada cuma lapisan datanya. Itu bukan

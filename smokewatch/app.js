@@ -2,7 +2,11 @@
  * Membaca catalog.json + aset dari pipeline backend; angin = partikel + heatmap
  * kecepatan, hujan = heatmap laju hujan. Layout & gaya ala BMKG Signature.
  */
-const DATA_BASE = "../backend/smokewatch/data/output/";
+/* SUMBER DATA SEMENTARA. Sama ceritanya dengan Atmosight, lihat komentar
+   panjang di atmosight/app.js. Kosongkan DATA_JAUH begitu pipeline CAMS
+   jalan di server sendiri, dia otomatis balik ke path relatif. */
+const DATA_JAUH = "https://bungakertas-py.github.io/smokewatch/backend/data/output/";
+const DATA_BASE = DATA_JAUH || "../backend/smokewatch/data/output/";
 
 // Definisi legend per layer: [label, warna, teksPutih?]
 // Kepala legenda cukup SATUANNYA saja. Nama parameter sudah terbaca di tombol yang

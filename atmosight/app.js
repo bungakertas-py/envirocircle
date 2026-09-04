@@ -11,7 +11,7 @@
 // membatalkan semuanya satu per satu, dan satu yang kelewat = data model lama
 // nempel di model baru. Muat ulang selalu benar dan ongkosnya sepersekian detik.
 const MODELS = {
-  gfs: { base: "../backend/atmosight/data/output/", label: "GFS (NOAA) - 28 km", ekstra: true },
+  gfs: { base: "../backend/atmosight/data/output/", label: "GFS - 28 km", ekstra: true },
   wrf: { base: "../backend/atmosight/data/output/wrf/", label: "WRF Citarum - 7 km", ekstra: false },
   wrf_itera: { base: "../backend/atmosight/data/output/wrf_itera/", label: "Private Model - 9 km", ekstra: false },
 };
@@ -38,13 +38,12 @@ const modelHidup = (id) => !!MODELS[id] && MODEL_AKTIF[id] === true;
 // kelihatan, tapi MATI dan tidak bisa dipilih. Tidak ada pipeline, tidak ada
 // data, tidak ada base path. Kalau nanti salah satunya betul betul digarap,
 // pindahkan dia ke MODELS di atas lalu nyalakan lewat MODEL_AKTIF.
-// ECMWF ikut dipajang sebab dia disebut di kartu Showcase landing page,
-// bareng GFS dan WRF. Angka 28 km itu resolusi IFS open data (0,25 derajat),
-// bukan HRES 9 km yang berbayar, jadi itulah yang realistis dipakai nanti.
+// Daftarnya dipatok user, jadi CUMA dua ini. ECMWF sempat ada di sini lalu
+// dicabut atas permintaan user, padahal chip di kartu Showcase landing page
+// masih menyebut ECMWF. Dua tempat itu memang tidak sama, dan itu disengaja.
 const MODEL_PAJANGAN = [
-  { label: "ECMWF IFS - 28 km" },
-  { label: "WRF - 3 km" },
-  { label: "WRFDA - 3 km" },
+  { label: "WRF - 9 km" },
+  { label: "WRFDA - 9 km" },
 ];
 
 const _mp = new URLSearchParams(location.search).get("model");
@@ -52,7 +51,23 @@ const _mp = new URLSearchParams(location.search).get("model");
 // dimatikan masih bisa dibuka orang cuma dengan mengetik ?model=wrf di alamat.
 const MODEL_ID = modelHidup(_mp) ? _mp : "gfs";
 const MODEL = MODELS[MODEL_ID];
-const DATA_BASE = MODEL.base;
+/* SUMBER DATA SEMENTARA.
+   Pohon gabungan ini sengaja dikirim tanpa keluaran pipeline, dan di GitHub
+   Pages memang tidak ada yang memasak data. Supaya petanya tetap berisi,
+   datanya DITUMPANG dari keluaran repo lama yang masih hidup dan masih
+   diperbarui tiap hari.
+
+   Ini TAMBALAN, bukan susunan akhir. Begitu pipeline jalan di server sendiri,
+   kosongkan string di bawah ini dan dia otomatis balik memakai path relatif
+   `../backend/atmosight/data/output/`. Tidak ada yang lain yang perlu diubah.
+
+   Aman lintas domain, GitHub Pages mengirim `access-control-allow-origin: *`,
+   sudah dicek. Jadi tetap jalan walau situsnya nanti pindah ke envirocircle.info.
+
+   Cuma berlaku untuk GFS. Model lain kalau dinyalakan tetap memakai path
+   relatifnya sendiri, sebab keluarannya memang tidak ada di repo lama itu. */
+const DATA_JAUH = "https://bungakertas-py.github.io/atmosight/backend/data/output/";
+const DATA_BASE = (DATA_JAUH && MODEL_ID === "gfs") ? DATA_JAUH : MODEL.base;
 // Layer tambahan (siklon, ITCZ, isobar, monsun, Skew-T, level stratosfer) cuma
 // ada di pipeline GFS. Di WRF berkasnya memang tak dibuat, jadi tombolnya
 // disembunyikan daripada dibiarkan mengejar 404.
@@ -2353,6 +2368,20 @@ function showLoadMsg(msg, asHtml) {
    Pesannya sengaja menyebut PERINTAHNYA, bukan cuma bilang data tidak ada.
    Orang yang membuka salinan ini biasanya baru pertama kali melihatnya. */
 function modeKosong() {
+  // Pesannya beda tergantung datanya diambil dari mana. Kalau menumpang
+  // sumber jauh lalu 404, itu BUKAN "belum dimasak", itu sumbernya yang
+  // hilang, dan menyuruh orang menjalankan pipeline cuma menyesatkan.
+  if (DATA_JAUH) {
+    showLoadMsg(
+      "<b>Sumber data tidak terjangkau</b><br><br>" +
+      "Peta dan seluruh antarmuka jalan normal, tapi katalog modelnya tidak " +
+      "ditemukan di sumber yang sedang ditumpangi.<br><br>" +
+      "<b>" + DATA_JAUH + "</b><br><br>" +
+      "Kalau sumber itu memang sudah tidak ada, kosongkan <b>DATA_JAUH</b> di " +
+      "app.js lalu masak datanya sendiri lewat pipeline.",
+      true);
+    return;
+  }
   showLoadMsg(
     "<b>Salinan tanpa data</b><br><br>" +
     "Peta dan seluruh antarmuka jalan normal, tapi keluaran model belum ada. " +

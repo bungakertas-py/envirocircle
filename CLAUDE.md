@@ -43,9 +43,15 @@ langkah memasak di pipeline. Kalau cuma dropdown yang dinyalakan, pilihannya
 muncul tapi petanya kosong sebab berkasnya tak pernah dibuat. Ini sudah pernah
 terjadi.
 
-**Salinan ini tanpa data, dan itu disengaja.** Kalau `catalog.json` tidak ada,
-Atmosight masuk `modeKosong()` dan Smokewatch masuk mode cangkang. Dua duanya
-BUKAN kerusakan. Jangan "memperbaiki" mode itu.
+**Data sekarang DITUMPANG dari repo lama.** Ada `DATA_JAUH` di kedua `app.js`
+yang menunjuk keluaran `atmosight` dan `smokewatch` lama di GitHub Pages.
+Itu tambalan sementara sebab pohon ini tidak membawa keluaran pipeline.
+Kosongkan `DATA_JAUH` begitu pipeline jalan di server sendiri, dia otomatis
+balik ke path relatif.
+
+**Kalau `catalog.json` tidak ada**, Atmosight masuk `modeKosong()` dan
+Smokewatch masuk mode cangkang. Dua duanya BUKAN kerusakan.
+Jangan "memperbaiki" mode itu.
 
 **Cache browser menipu.** App peta memuat ratusan PNG dan JSON dengan nama yang
 sama antar run. Selalu pakai `dev_server.py`, dia memasang no-store. Kalau tidak,
