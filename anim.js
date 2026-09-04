@@ -382,3 +382,114 @@
    membandingkan hero.getBoundingClientRect().bottom dengan bar.offsetHeight,
    digandeng requestAnimationFrame.
    ===================================================================== */
+
+/* =====================================================================
+   Korsel Showcase.
+
+   Satu kartu lanskap di tengah, tetangganya mengintip terpotong, digeser
+   pakai dua panah. Acuannya Showcase gsap.com.
+
+   IIFE TERPISAH dari blok animasi, sebab ini perilaku antarmuka biasa dan
+   harus tetap jalan walau GSAP gagal dimuat atau pengguna memilih
+   prefers-reduced-motion. Kalau GSAP tidak ada, transform tetap disetel
+   langsung dan .sc-rel punya transition CSS sebagai cadangan.
+   ===================================================================== */
+(function () {
+  "use strict";
+  var rel   = document.getElementById("sc-rel");
+  var layar = rel && rel.parentElement;
+  var kiri  = document.getElementById("sc-kiri");
+  var kanan = document.getElementById("sc-kanan");
+  var ket   = document.getElementById("sc-ket");
+  if (!rel || !layar || !kiri || !kanan || !ket) return;
+
+  var slide = [].slice.call(rel.querySelectorAll(".sc-slide"));
+  var kap   = [].slice.call(ket.querySelectorAll(".sc-kap"));
+  if (slide.length < 2) return;
+
+  var idx = 0;
+  var pelan = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* Margin halaman dibaca dari padding .wrap, bukan dihitung ulang dari
+     --gutter. Nilai vw harus dikonversi sendiri kalau dibaca dari token, dan
+     itu gampang meleset waktu ada scrollbar. Padding yang sudah dihitung
+     browser selalu benar. */
+  function margin() {
+    var w = rel.closest(".wrap");
+    return w ? parseFloat(getComputedStyle(w).paddingLeft) || 0 : 0;
+  }
+
+  /* Kartu ujung DIPATOK ke margin, tidak ditengahkan.
+     Kalau kartu pertama ditengahkan, sisi kirinya menganga kosong dan
+     terbaca seperti ada yang hilang, apalagi sekarang produknya baru dua
+     dan memang tidak ada tetangga kiri. Dengan dijepit begini, kartu ujung
+     rata dengan margin halaman dan yang di tengah tetap ditengahkan.
+     Aturannya ikut jalan sendiri begitu produk ketiga ditambahkan. */
+  function posisi(i) {
+    var s = slide[i];
+    var m = margin();
+    var tengah = layar.clientWidth / 2 - (s.offsetLeft + s.offsetWidth / 2);
+    var maks = m;                                   // sisi kiri rel rata margin
+    var min  = layar.clientWidth - rel.scrollWidth - m;  // sisi kanan rata margin
+    if (min > maks) min = maks;                     // rel lebih sempit dari layar
+    return Math.max(min, Math.min(maks, tengah));
+  }
+
+  function pasangKeadaan() {
+    slide.forEach(function (s, i) { s.classList.toggle("aktif", i === idx); });
+    var nama = slide[idx].getAttribute("data-nama");
+    kap.forEach(function (k) { k.hidden = k.getAttribute("data-nama") !== nama; });
+    kiri.disabled  = idx === 0;
+    kanan.disabled = idx === slide.length - 1;
+  }
+
+  function geser(i, langsung) {
+    idx = Math.max(0, Math.min(slide.length - 1, i));
+    pasangKeadaan();
+    var x = posisi(idx);
+    if (langsung || pelan || typeof gsap === "undefined") {
+      rel.style.transform = "translateX(" + x + "px)";
+      return;
+    }
+    /* back.out itu MELEWATI sasaran lalu balik, dan di sini itu memang yang
+       diminta, geraknya harus terasa membentur. Aman dipakai sebab sasaran
+       ini tidak punya batas fisik yang tidak boleh dilewati, beda dengan
+       titik huruf i di hero. */
+    gsap.to(rel, { x: x, duration: 0.62, ease: "back.out(1.15)", overwrite: true });
+    var shot = slide[idx].querySelector(".sc-shot");
+    if (shot) {
+      gsap.fromTo(shot, { scale: 0.955 },
+        { scale: 1, duration: 0.55, ease: "back.out(2.4)", clearProps: "scale", overwrite: true });
+    }
+  }
+
+  kiri.addEventListener("click", function () { geser(idx - 1); });
+  kanan.addEventListener("click", function () { geser(idx + 1); });
+
+  /* Panah papan ketik. Korselnya bukan elemen fokus sendiri, jadi yang
+     didengar tombol panahnya, itu sudah cukup dan tidak merebut panah dari
+     bagian halaman lain. */
+  [kiri, kanan].forEach(function (b) {
+    b.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowLeft")  { e.preventDefault(); geser(idx - 1); }
+      if (e.key === "ArrowRight") { e.preventDefault(); geser(idx + 1); }
+    });
+  });
+
+  /* Ukuran kartu ikut vw, jadi tiap layar berubah posisinya harus dihitung
+     ulang. Langsung, tanpa animasi, kalau tidak dia terlihat melayang tiap
+     jendela diseret. Digandeng rAF supaya tidak menghitung tiap kejadian. */
+  var nunggu = false;
+  window.addEventListener("resize", function () {
+    if (nunggu) return;
+    nunggu = true;
+    requestAnimationFrame(function () { nunggu = false; geser(idx, true); });
+  });
+
+  /* Gambar sampulnya belum tentu sudah termuat waktu skrip ini jalan, dan
+     sebelum termuat tingginya nol sehingga offsetLeft bisa meleset. Dihitung
+     ulang sekali lagi setelah semuanya selesai memuat. */
+  window.addEventListener("load", function () { geser(idx, true); });
+
+  geser(0, true);
+})();

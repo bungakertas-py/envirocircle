@@ -324,38 +324,83 @@ section { padding: 30px 0; }
   font-size: clamp(15px, 1.5vw, 17px); color: var(--variant);
 }
 
-.catalog { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
+/* ---- Korsel Showcase ----
+   Satu kartu lanskap di tengah, tetangganya mengintip terpotong di kanan,
+   keterangannya di bawah. Acuannya Showcase gsap.com.
 
-.card {
-  display: flex; flex-direction: column;
-  background: var(--surface);
+   Yang memotong tetangga itu .sc-layar dengan overflow hidden, dan dia
+   sengaja MENEMBUS margin halaman lewat margin negatif sebesar --gutter.
+   Kalau dia berhenti di margin, tetangganya terpotong di tengah halaman dan
+   tidak terbaca sebagai "masih ada lagi di luar layar". */
+.sc-korsel { position: relative; }
+.sc-layar {
+  overflow: hidden;
+  margin-left: calc(-1 * var(--gutter));
+  margin-right: calc(-1 * var(--gutter));
+  padding: 10px 0 22px;   /* ruang buat bayangan keras, kalau 0 dia ikut terpotong */
+}
+/* Rel digeser lewat transform yang dihitung JS, BUKAN lewat scroll. Dengan
+   transform, geraknya bisa dikasih pantulan dan tidak bisa diseret setengah
+   jalan lalu berhenti di antara dua kartu. */
+.sc-rel {
+  display: flex; align-items: stretch;
+  gap: 3vw;
+  will-change: transform;
+  /* Cadangan kalau GSAP gagal dimuat atau pengguna memilih reduced-motion.
+     Waktu GSAP yang menggerakkan, properti ini tidak mengganggu sebab yang
+     dipakai transform juga dan durasinya jauh lebih pendek dari tweennya. */
+  transition: transform .45s cubic-bezier(.22,.74,.28,1);
+}
+.sc-slide {
+  flex: 0 0 auto;
+  width: min(64vw, 1000px);
+  margin: 0;
+}
+/* Kartu lanskap. Gambarnya 1400x875, rasio 1,6, jadi memang sudah lanskap
+   dan tidak perlu dipaksa aspect-ratio. */
+.sc-shot {
   border: var(--bw) solid var(--ink);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  overflow: hidden;
-  transition: transform .12s ease, box-shadow .12s ease;
+  overflow: hidden; line-height: 0;
+  transition: opacity .35s ease;
 }
-.card:hover { transform: translate(-4px, -4px); box-shadow: 10px 10px 0 0 var(--ink); }
+.sc-shot img { width: 100%; height: auto; display: block; }
+.sc-shot--atmos { background: #e6feff; }
+.sc-shot--smoke { background: #ddf2ee; }
+/* Yang bukan kartu aktif diredupkan, jadi jelas mana yang sedang dibicarakan
+   keterangan di bawah. Bukan disembunyikan, dia justru harus terlihat sebagai
+   ajakan untuk digeser. */
+.sc-slide:not(.aktif) .sc-shot { opacity: .45; }
 
-/* Sampul, PREVIEW ASLI kedua app, bukan tiruan.
-   Tangkapan layar tampilan awal waktu peta baru dibuka, seluruh Indonesia,
-   sidebar kanan tidak muncul sebab memang belum ada titik yang dipilih.
-   Cara membuatnya ada di catatan, headless Chrome 1280x800 dengan
-   --force-device-scale-factor=2 langsung ke situs live, lalu diperkecil ke
-   1400 px dan disimpan WebP.
-
-   TIDAK ada aspect-ratio dipaksa di sini. Tingginya mengikuti rasio gambar
-   apa adanya, sesuai permintaan. Dua duanya 1400x875, rasio tepat 1,6.
-   Warna latarnya tetap ada sebagai alas selagi gambar belum termuat. */
-.card-cover {
-  border-bottom: var(--bw) solid var(--ink);
-  line-height: 0;
+/* Panah. Mengambang di atas kartu, gaya pil neubrutalis yang sama dengan
+   tombol lain, jadi ditekan pun terasa turun. */
+.sc-panah {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  z-index: 5; width: 54px; height: 54px;
+  display: grid; place-items: center; cursor: pointer;
+  background: var(--surface); color: var(--ink);
+  border: var(--bw) solid var(--ink);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-sm);
+  transition: transform .1s ease, box-shadow .1s ease, opacity .2s ease;
 }
-.card-cover--atmos { background: #e6feff; }
-.card-cover--smoke { background: #ddf2ee; }
-.card-cover img { width: 100%; height: auto; display: block; }
+.sc-panah--kiri  { left: calc(-1 * var(--gutter) + 10px); }
+.sc-panah--kanan { right: calc(-1 * var(--gutter) + 10px); }
+.sc-panah:hover { background: var(--lime); color: var(--on-lime); }
+.sc-panah:active { transform: translateY(-50%) translate(3px, 3px); box-shadow: none; }
+/* Mati di ujung. Dibuat pudar dan tidak bisa ditekan, bukan disembunyikan,
+   supaya tata letaknya tidak melompat waktu ujungnya tercapai. */
+.sc-panah[disabled] { opacity: .28; cursor: default; box-shadow: none; }
+.sc-panah[disabled]:hover { background: var(--surface); color: var(--ink); }
+.sc-panah .material-symbols-outlined { font-size: 28px; }
 
-.card-body { padding: 30px 32px 34px; display: flex; flex-direction: column; flex: 1; }
+/* Keterangan di bawah kartu. Yang tidak aktif disembunyikan, dan aturan ini
+   WAJIB, sebab .sc-kap itu display flex dan flex mengalahkan bawaan browser
+   untuk atribut hidden. */
+/* Tiga aturan teks ini WARISAN kartu lama dan masih dipakai keterangan
+   korsel. Namanya sengaja tidak diganti supaya diff-nya kecil dan supaya
+   jelas dia elemen yang sama, cuma pindah tempat. */
 .card-kind {
   font-family: var(--font-mono); font-weight: 700; font-size: 11px;
   letter-spacing: .12em; text-transform: uppercase; color: var(--variant);
@@ -367,6 +412,12 @@ section { padding: 30px 0; }
 }
 .card-desc { margin: 12px 0 0; font-size: 16px; line-height: 1.6; color: var(--variant); max-width: 46ch; }
 
+.sc-ket { margin-top: 30px; min-height: 210px; }
+.sc-kap { display: flex; flex-direction: column; align-items: flex-start; }
+.sc-kap[hidden] { display: none; }
+.sc-kap .card-title { margin: 8px 0 0; }
+.sc-kap .btn { margin-top: 24px; }
+
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0 0; }
 .chip {
   font-family: var(--font-mono); font-weight: 700; font-size: 11px; letter-spacing: .02em;
@@ -377,8 +428,7 @@ section { padding: 30px 0; }
 /* Tombol TETAP varian beraksen. Di kartu yang sudah dikosongkan begini dia
    satu satunya warna kuat, jadi justru jelas mana yang harus diklik.
    Minimalis itu menyisakan yang perlu, bukan memucatkan semuanya. */
-.card .btn { align-self: flex-start; margin-top: 26px; }
-.card .btn .material-symbols-outlined { font-size: 18px; }
+.sc-kap .btn .material-symbols-outlined { font-size: 18px; }
 
 /* ---- Tim, daftar nama berhuruf raksasa di atas latar hitam ----
    BUKAN kartu lagi. Kartu itu bentuk paling netral, dan Showcase persis di
@@ -534,7 +584,6 @@ footer a.f-link { color: var(--lime); border-bottom: 2px solid var(--lime); }
   .hero-title .hl-1 { margin-left: 0; }
   .hero-title .hl-2 { margin-left: 8%; }
   .hero-foot { justify-content: flex-start; }
-  .catalog { grid-template-columns: 1fr; gap: 22px; }
   /* Di layar sempit foto kembali IKUT ALIRAN, absolut cuma bikin tabrakan.
      Peran turun ke bawah nama, dan nomornya dirapatkan. */
   .team-row { grid-template-columns: 1fr 120px; min-height: 140px; gap: 14px; }
@@ -546,8 +595,16 @@ footer a.f-link { color: var(--lime); border-bottom: 2px solid var(--lime); }
                 width: auto; height: 170px; align-self: end; }
   .team-head { margin-bottom: 4vh; }
   #showcase { padding: 9vh 0 11vh; }
+  /* Di HP 64vw itu kekecilan, kartunya jadi perangko. Dilebarkan sampai
+     hampir selebar layar, tetangganya cukup mengintip tipis saja. */
+  .sc-slide { width: 86vw; }
+  .sc-rel { gap: 5vw; }
+  .sc-panah { width: 44px; height: 44px; }
+  .sc-panah .material-symbols-outlined { font-size: 22px; }
+  .sc-panah--kiri  { left: 4px; }
+  .sc-panah--kanan { right: 4px; }
+  .sc-ket { min-height: 250px; }
   .sc-lead { margin-bottom: 34px; }
-  .card-body { padding: 22px 22px 26px; }
   .about-band { padding: 8px 0 6px; }
 }
 

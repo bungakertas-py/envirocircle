@@ -89,44 +89,68 @@
         <h2 class="sc-title" data-sc>Dua peta, satu <span class="glow">sumber</span>.</h2>
         <p class="sc-lead" data-sc>Keduanya berdiri di atas model atmosfer yang terbuka dan gratis, dari model sedunia sampai model wilayah yang dijalankan sendiri. Diolah otomatis tiap hari, lalu disajikan sebagai peta yang bisa dibaca tanpa latar belakang teknis.</p>
 
-        <div class="catalog">
+        <!-- Korsel. Satu kartu lanskap di tengah, tetangganya mengintip
+             terpotong di kiri kanan, keterangannya di bawah. Acuannya Showcase
+             gsap.com yang dikirim user.
+             TIDAK berputar, dan tidak ada tetangga kiri di tampilan awal.
+             Diminta user, sebab produknya baru dua, dan memaksa ada tetangga
+             di kiri berarti memajang produk yang sama dua kali. Jadi mulai
+             dari Atmosight dengan Smokewatch mengintip di kanan, panah kiri
+             mati sampai digeser. Begitu produk ketiga ada, tinggal tambah satu
+             <article>, sisanya jalan sendiri. -->
+        <div class="sc-korsel" data-sc>
+          <div class="sc-layar">
+            <div class="sc-rel" id="sc-rel">
+              <article class="sc-slide" data-nama="atmosight">
+                <div class="sc-shot sc-shot--atmos">
+                  <img src="img/atmosight.webp" width="1400" height="875" decoding="async"
+                       alt="Tampilan awal Atmosight, peta angin seluruh Indonesia dari model GFS" />
+                </div>
+              </article>
+              <article class="sc-slide" data-nama="smokewatch">
+                <div class="sc-shot sc-shot--smoke">
+                  <img src="img/smokewatch.webp" width="1400" height="875" decoding="async"
+                       alt="Tampilan awal Smokewatch, peta ISPU seluruh Indonesia dari model CAMS" />
+                </div>
+              </article>
+            </div>
+          </div>
 
-          <article class="card" data-sc>
-            <div class="card-cover card-cover--atmos">
-              <img src="img/atmosight.webp" width="1400" height="875" loading="lazy" decoding="async"
-                   alt="Tampilan awal Atmosight, peta angin seluruh Indonesia dari model GFS" />
-            </div>
-            <div class="card-body">
-              <span class="card-kind">Peta cuaca</span>
-              <h3 class="card-title">Atmosight</h3>
-              <p class="card-desc">Prakiraan cuaca interaktif seluruh Indonesia, sampai tiga hari ke depan.</p>
-              <div class="chips">
-                <span class="chip">GFS</span><span class="chip">ECMWF</span><span class="chip">WRF</span>
-              </div>
-              <a class="btn btn--primary" href="atmosight/">
-                Buka Atmosight <span class="material-symbols-outlined">arrow_outward</span>
-              </a>
-            </div>
-          </article>
+          <button class="sc-panah sc-panah--kiri" id="sc-kiri" type="button" aria-label="Produk sebelumnya">
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          <button class="sc-panah sc-panah--kanan" id="sc-kanan" type="button" aria-label="Produk berikutnya">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+        </div>
 
-          <article class="card" data-sc>
-            <div class="card-cover card-cover--smoke">
-              <img src="img/smokewatch.webp" width="1400" height="875" loading="lazy" decoding="async"
-                   alt="Tampilan awal Smokewatch, peta ISPU seluruh Indonesia dari model CAMS" />
+        <!-- Keterangannya DI BAWAH kartu, seperti acuan. Dua duanya ditulis
+             sebagai markup sungguhan lalu yang tidak aktif disembunyikan,
+             bukan dirakit JS. Dengan begitu chip dan tombolnya tetap elemen
+             beneran, bisa di-tab dan tetap ada kalau JS gagal. -->
+        <div class="sc-ket" id="sc-ket" data-sc>
+          <div class="sc-kap" data-nama="atmosight">
+            <span class="card-kind">Peta cuaca</span>
+            <h3 class="card-title">Atmosight</h3>
+            <p class="card-desc">Prakiraan cuaca interaktif seluruh Indonesia, sampai tiga hari ke depan.</p>
+            <div class="chips">
+              <span class="chip">GFS</span><span class="chip">ECMWF</span><span class="chip">WRF</span>
             </div>
-            <div class="card-body">
-              <span class="card-kind">Peta kualitas udara</span>
-              <h3 class="card-title">Smokewatch</h3>
-              <p class="card-desc">Peta polusi udara seluruh Indonesia, dari ISPU sampai daya tampung wilayah.</p>
-              <div class="chips">
-                <span class="chip">CAMS</span><span class="chip">WRF-Chem</span><span class="chip">CAMx</span><span class="chip">CMAQ</span><span class="chip">Flexpart</span>
-              </div>
-              <a class="btn btn--primary" href="smokewatch/">
-                Buka Smokewatch <span class="material-symbols-outlined">arrow_outward</span>
-              </a>
+            <a class="btn btn--primary" href="atmosight/">
+              Buka Atmosight <span class="material-symbols-outlined">arrow_outward</span>
+            </a>
+          </div>
+          <div class="sc-kap" data-nama="smokewatch" hidden>
+            <span class="card-kind">Peta kualitas udara</span>
+            <h3 class="card-title">Smokewatch</h3>
+            <p class="card-desc">Peta polusi udara seluruh Indonesia, dari ISPU sampai daya tampung wilayah.</p>
+            <div class="chips">
+              <span class="chip">CAMS</span><span class="chip">WRF-Chem</span><span class="chip">CAMx</span><span class="chip">CMAQ</span><span class="chip">Flexpart</span>
             </div>
-          </article>
-
+            <a class="btn btn--primary" href="smokewatch/">
+              Buka Smokewatch <span class="material-symbols-outlined">arrow_outward</span>
+            </a>
+          </div>
         </div>
       </div>
     </section>
