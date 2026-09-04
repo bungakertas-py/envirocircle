@@ -61,9 +61,9 @@
 html { scroll-behavior: smooth; }
 /* Bar beku setinggi 70px. Tanpa ini, tepi atas bagian yang dituju jangkar
    akan tersembunyi di baliknya. */
-/* 88px. Bar 70 + pita cyan 10 = 80, lalu sisakan sedikit udara. Kalau tinggi
-   bar atau pitanya diubah, angka ini ikut. */
-section[id] { scroll-margin-top: 88px; }
+/* 78px. Bar 70 lalu sisakan sedikit udara. Pita cyan sudah dibuang jadi
+   tidak ada yang perlu ditambahkan lagi. */
+section[id] { scroll-margin-top: 78px; }
 body {
   margin: 0; background: var(--paper); color: var(--ink);
   font-family: var(--font-ui); font-weight: 500; line-height: 1.5;
@@ -114,13 +114,12 @@ a { color: inherit; text-decoration: none; }
 
 /* navbar overlay */
 .hero-top {
-  /* DIBEKUKAN dan SELALU PADAT. Diminta user, sebelumnya bar ini tembus
-     pandang selagi masih di atas hero lalu dipadatkan lewat kelas .padat.
-     Saklar itu SUDAH DIBUANG, di CSS maupun di anim.js.
-     Ongkosnya, kontur PM2.5 di hero kembali terpotong rata setinggi bar.
-     Itu memang yang ditukar dengan bar yang selalu terbaca. */
+  /* DIBEKUKAN, dan latarnya TIDAK ADA sampai dibutuhkan.
+     Bidang hitamnya digambar di .hero-bar::before, bukan di sini, sebab yang
+     harus memudar cuma bidangnya. Kalau opacity dipasang di elemen ini,
+     tulisan dan lambangnya ikut pudar. */
   position: fixed; z-index: 50; top: 0; left: 0; right: 0;
-  background: var(--paper);
+  background: transparent;
 }
 /* Brand kiri, menu MENTOK KANAN. Diminta user. Dulu tiga kolom dengan menu
    di tengah dan kolom ketiga kosong sebagai penyeimbang, penyeimbang itu
@@ -129,10 +128,8 @@ a { color: inherit; text-decoration: none; }
   position: relative;
   display: flex; align-items: center; justify-content: space-between;
   gap: 20px; height: 70px;
-  /* TANPA garis tinta. Sempat ada border-bottom 3px di sini dan satu lagi di
-     bawah pita cyan, dua duanya dibuang atas permintaan user. Pemisahnya
-     sekarang murni loncatan warna, kertas ke cyan, dan itu sudah cukup tegas
-     tanpa perlu digarisi. */
+  /* TANPA garis tinta, dan sejak sekarang tanpa pita cyan juga.
+     Dua duanya dibuang atas permintaan user. */
   /* SATU SATUNYA yang tidak memakai --gutter mentah, dan ini disengaja.
      Lambang bar harus segaris dengan huruf P pada "Precise", padahal baris
      judul itu sendiri digeser 2% dari lebar isi hero. Jadi angkanya
@@ -143,20 +140,57 @@ a { color: inherit; text-decoration: none; }
      .hero-title .hl-1 dibuang dulu. */
   padding: 0 calc(0.96 * var(--gutter) + 2vw);
 }
-/* LAPIS KEDUA, pita cyan yang menggantung di bawah bar. Ini yang bikin bar
-   terbaca sebagai dua keping bertumpuk, bukan satu bidang datar, persis cara
-   bayangan keras bekerja di kartu dan tombol. Bedanya di sini dia melintang
-   penuh, sebab bar memang menembus tepi ke tepi.
-   Digambar lewat ::after supaya tidak menambah elemen di markup, dan
-   ditaruh di top:100% jadi dia MENGGANTUNG, tidak memakan tinggi bar. */
-.hero-bar::after {
-  content: ""; position: absolute; top: 100%; left: 0; right: 0;
-  height: 10px; background: var(--lime);
+/* BIDANG HITAM bar, dan dia LAPIS PALING BAWAH.
+   Susunannya diminta user, paling atas tombol dan lambang, di bawahnya baru
+   bidang hitam ini. Digambar lewat ::before supaya tidak menambah elemen di
+   markup, dan menembus tepi ke tepi sebab bar memang begitu.
+   Yang memudar cuma bidang ini, bukan seluruh bar. Kalau opacity dipasang di
+   .hero-top, tulisan dan lambangnya ikut pudar dan itu bukan yang diminta.
+   Warnanya --ink, sama persis dengan latar bagian tim. */
+.hero-bar::before {
+  content: ""; position: absolute; inset: 0; z-index: 0;
+  background: var(--ink);
+  opacity: 0;
+  transition: opacity .3s ease;
 }
-/* Halo text-shadow DIBUANG. Gunanya cuma supaya tulisan tidak ditelan pita
-   kontur selagi bar tembus pandang. Barnya sekarang selalu padat, jadi halo
-   itu tidak mengerjakan apa apa lagi. */
-.hero-bar .brand-name { color: var(--ink); }
+/* Isi bar dinaikkan di atas bidangnya. Tanpa ini bidang hitam menutupi
+   tulisan, sebab dia digambar belakangan. */
+.hero-bar > * { position: relative; z-index: 1; }
+
+/* Muncul waktu disorot, DAN waktu hero sudah terlewat. Kelas .gelap dipasang
+   JS, lihat anim.js. Dua duanya memakai jalur yang sama supaya transisinya
+   tidak pernah bertabrakan. */
+.hero-bar:hover::before,
+.hero-top.gelap .hero-bar::before { opacity: 1; }
+
+/* Lambangnya ikut menyesuaikan. Garis dan bayangannya --ink, dan tinta di
+   atas bidang tinta itu sama saja dengan tidak digambar, bentuk kotaknya
+   hilang separuh. Jadi di keadaan gelap dua duanya dibalik jadi --paper.
+   Jebakan yang sama sudah kena dua kali sebelumnya, di kartu tim dan di
+   bayangan baris tim. */
+.brand-mark { transition: border-color .3s ease, box-shadow .3s ease; }
+.hero-bar:hover .brand-mark,
+.hero-top.gelap .brand-mark {
+  border-color: var(--paper);
+  box-shadow: 4px 4px 0 0 var(--paper);
+}
+/* ---- Warna tulisan bar, ikut keadaan bidang di belakangnya ----
+   Di awal bidangnya tidak ada, jadi yang di belakang tulisan itu hero yang
+   PUTIH, dan tulisannya harus gelap. Begitu bidang hitam muncul, tulisannya
+   berbalik terang. Dua duanya diberi transisi dengan durasi yang SAMA dengan
+   bidangnya, 0.3s, jadi warnanya berpindah bersamaan dan tidak pernah ada
+   sekejap tulisan gelap di atas hitam. */
+.hero-bar .brand-name { color: var(--ink); transition: color .3s ease; }
+.hero-nav a { transition: color .3s ease; }
+
+.hero-bar:hover .brand-name,
+.hero-top.gelap .hero-bar .brand-name { color: var(--paper); }
+
+.hero-bar:hover .hero-nav a,
+.hero-top.gelap .hero-nav a { color: var(--surface-highest); }
+
+.hero-bar:hover .hero-nav a:hover,
+.hero-top.gelap .hero-nav a:hover { color: var(--lime); }
 /* Susunan dan gaya menu mengikuti acuan yang dikirim user.
    Ini SATU SATUNYA tempat yang keluar dari pola "label kecil itu mono huruf
    besar". Di acuan menunya huruf biasa, agak besar, dan redup, jadi di sini

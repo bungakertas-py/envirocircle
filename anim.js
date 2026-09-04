@@ -370,18 +370,39 @@
 })();
 
 /* =====================================================================
-   Saklar latar top bar DIBUANG 4 Sep.
+   Bidang hitam top bar, dipasang begitu hero terlewat.
 
-   Dulu di sini ada IIFE yang memasang kelas .padat pada .hero-top begitu
-   hero terlewat, supaya bar tembus pandang selagi masih di atas kontur lalu
-   memadat waktu melintas di atas Showcase dan bagian tim yang hitam.
+   Bidangnya sendiri digambar CSS di .hero-bar::before dan sudah muncul
+   sendiri waktu disorot. Yang tidak bisa dikerjakan CSS cuma satu, tahu
+   kapan hero sudah lewat. Itu tugas blok ini, dia cuma memasang dan
+   melepas kelas .gelap, tidak menyentuh warna apa pun.
 
-   User minta bar SELALU padat, jadi saklarnya tidak ada gunanya lagi dan
-   kelas .padat ikut dibuang dari style.css. Kalau suatu saat bar tembus
-   pandang dipakai lagi, yang dibutuhkan cuma satu pendengar scroll yang
-   membandingkan hero.getBoundingClientRect().bottom dengan bar.offsetHeight,
-   digandeng requestAnimationFrame.
+   Diminta user, sebab bar ini beku dan ikut turun ke bagian yang latarnya
+   sudah bukan putih lagi. Tanpa ini tulisan gelapnya menabrak pita tim yang
+   juga gelap.
+
+   IIFE TERPISAH dari blok animasi, sebab ini perilaku antarmuka biasa dan
+   harus tetap jalan walau GSAP gagal dimuat atau pengguna memilih
+   prefers-reduced-motion.
    ===================================================================== */
+(function () {
+  "use strict";
+  var bar  = document.querySelector(".hero-top");
+  var hero = document.querySelector(".hero");
+  if (!bar || !hero) return;
+
+  var nunggu = false;
+  function periksa() {
+    nunggu = false;
+    bar.classList.toggle("gelap", hero.getBoundingClientRect().bottom <= bar.offsetHeight);
+  }
+  /* Digandeng ke rAF supaya tidak menghitung ulang tiap kejadian gulir. */
+  function jadwal() { if (!nunggu) { nunggu = true; requestAnimationFrame(periksa); } }
+
+  periksa();
+  window.addEventListener("scroll", jadwal, { passive: true });
+  window.addEventListener("resize", jadwal);
+})();
 
 /* =====================================================================
    Korsel Showcase.
