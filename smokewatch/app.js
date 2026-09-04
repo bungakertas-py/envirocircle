@@ -2969,6 +2969,10 @@ async function init() {
     $("pt-reopen")?.addEventListener("click", reopenPoint);
     $("share-btn")?.addEventListener("click", shareCurrent);
     $("fs-btn")?.addEventListener("click", toggleFullscreen);
+    /* #about-btn SUDAH TIDAK ADA di markup, diganti tautan rumah ke landing.
+       Baris ini dibiarkan dan aman sebab pakai ?., jadi bagian #about tinggal
+       dipasangi pintu masuk baru kapan saja tanpa menulis ulang apa apa.
+       Untuk sekarang bagian itu memang tidak bisa dibuka siapa pun. */
     $("about-btn")?.addEventListener("click", openAbout);
     $("nav-arrow")?.addEventListener("click", () => $("nav-arrow").closest(".brand-row")?.classList.toggle("nav-open"));
     $("about-close")?.addEventListener("click", closeAbout);

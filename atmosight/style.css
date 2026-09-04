@@ -745,6 +745,7 @@ html, body {
 .brand-info { flex: none; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
   background: var(--surface); border: 2px solid var(--ink); box-shadow: 2px 2px 0 0 var(--ink);
   cursor: pointer; pointer-events: auto; margin-left: 2px; }
+.brand-info { text-decoration: none; }   /* dia <a> sekarang, bukan <button> */
 .brand-info:hover { background: var(--lime); }
 .brand-info .material-symbols-outlined { font-size: 17px; color: var(--primary); }
 .brand-info:hover .material-symbols-outlined { color: var(--on-lime); }
