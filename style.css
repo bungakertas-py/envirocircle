@@ -366,11 +366,16 @@ section { padding: 30px 0; }
    sengaja MENEMBUS margin halaman lewat margin negatif sebesar --gutter.
    Kalau dia berhenti di margin, tetangganya terpotong di tengah halaman dan
    tidak terbaca sebagai "masih ada lagi di luar layar". */
-.sc-korsel { position: relative; }
+/* Lebarnya DIPATOK JS, tepat selebar satu kartu ditambah sela ditambah
+   seperdelapan kartu. Dengan begitu tetangganya terpotong pas di seperdelapan
+   dan tidak ada ruang kosong menganga di antaranya.
+   Dulu blok ini menembus tepi layar lewat margin negatif. Itu memaksa kartu
+   ikut selebar layar, dan begitu kartunya dikecilkan supaya keterangan dan
+   tombol muat, tetangganya jadi kelihatan hampir seluruhnya. Dua duanya
+   keluhan user, dan sumbernya satu, lebar wadah yang dipaksa penuh. */
+.sc-korsel { position: relative; margin: 0 auto; }
 .sc-layar {
   overflow: hidden;
-  margin-left: calc(-1 * var(--gutter));
-  margin-right: calc(-1 * var(--gutter));
   padding: 10px 0 22px;   /* ruang buat bayangan keras, kalau 0 dia ikut terpotong */
 }
 /* Rel digeser lewat transform yang dihitung JS, BUKAN lewat scroll. Dengan
@@ -385,9 +390,14 @@ section { padding: 30px 0; }
      dipakai transform juga dan durasinya jauh lebih pendek dari tweennya. */
   transition: transform .45s cubic-bezier(.22,.74,.28,1);
 }
+/* Dibatasi TINGGI, bukan cuma lebar. Gambarnya 1400x875, rasio 1,6, jadi
+   50vh tinggi berarti 80vh lebar. Batas tinggi itu yang bikin kartu, judul,
+   keterangan, dan tombolnya muat sekali layar di laptop. Sebelumnya cuma
+   dibatasi lebar, dan di layar lebar kartunya jadi setinggi 576 px sehingga
+   tombol Buka Atmosight jatuh di bawah lipatan. */
 .sc-slide {
   flex: 0 0 auto;
-  width: min(64vw, 1000px);
+  width: min(62vw, calc(50vh * 1.6), 980px);
   margin: 0;
 }
 /* Kartu lanskap. Gambarnya 1400x875, rasio 1,6, jadi memang sudah lanskap
@@ -419,8 +429,11 @@ section { padding: 30px 0; }
   box-shadow: var(--shadow-sm);
   transition: transform .1s ease, box-shadow .1s ease, opacity .2s ease;
 }
-.sc-panah--kiri  { left: calc(-1 * var(--gutter) + 10px); }
-.sc-panah--kanan { right: calc(-1 * var(--gutter) + 10px); }
+/* Setengah menggantung di luar tepi korsel. Korselnya sekarang lebih sempit
+   dari halaman, jadi ruang di kiri kanannya lega dan panahnya tidak menutupi
+   petanya. */
+.sc-panah--kiri  { left: -27px; }
+.sc-panah--kanan { right: -27px; }
 .sc-panah:hover { background: var(--lime); color: var(--on-lime); }
 .sc-panah:active { transform: translateY(-50%) translate(3px, 3px); box-shadow: none; }
 /* Mati di ujung. Dibuat pudar dan tidak bisa ditekan, bukan disembunyikan,
@@ -446,7 +459,7 @@ section { padding: 30px 0; }
 }
 .card-desc { margin: 12px 0 0; font-size: 16px; line-height: 1.6; color: var(--variant); max-width: 46ch; }
 
-.sc-ket { margin-top: 30px; min-height: 210px; }
+.sc-ket { margin: 30px auto 0; min-height: 210px; }
 .sc-kap { display: flex; flex-direction: column; align-items: flex-start; }
 .sc-kap[hidden] { display: none; }
 .sc-kap .card-title { margin: 8px 0 0; }
@@ -632,7 +645,6 @@ footer a.f-link { color: var(--lime); border-bottom: 2px solid var(--lime); }
   /* Di HP 64vw itu kekecilan, kartunya jadi perangko. Dilebarkan sampai
      hampir selebar layar, tetangganya cukup mengintip tipis saja. */
   .sc-slide { width: 86vw; }
-  .sc-rel { gap: 5vw; }
   .sc-panah { width: 44px; height: 44px; }
   .sc-panah .material-symbols-outlined { font-size: 22px; }
   .sc-panah--kiri  { left: 4px; }

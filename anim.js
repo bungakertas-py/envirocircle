@@ -431,28 +431,39 @@
   var idx = 0;
   var pelan = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  /* Margin halaman dibaca dari padding .wrap, bukan dihitung ulang dari
-     --gutter. Nilai vw harus dikonversi sendiri kalau dibaca dari token, dan
-     itu gampang meleset waktu ada scrollbar. Padding yang sudah dihitung
-     browser selalu benar. */
-  function margin() {
-    var w = rel.closest(".wrap");
-    return w ? parseFloat(getComputedStyle(w).paddingLeft) || 0 : 0;
+  var korsel = layar.parentElement;
+  var ket    = document.getElementById("sc-ket");
+
+  /* SEBERAPA BANYAK TETANGGA MENGINTIP. Diminta user, seperdelapan lebar
+     kartu, tidak lebih.
+
+     Caranya BUKAN menggeser relnya lebih jauh, tapi menyempitkan wadahnya.
+     Dengan wadah selebar satu kartu + sela + seperdelapan kartu, tetangga
+     otomatis terpotong pas di angka itu, dan tidak ada ruang kosong menganga
+     di antara dua kartu. Kalau wadahnya dibiarkan selebar halaman, satu
+     satunya cara mengecilkan intipan adalah membesarkan kartunya, dan itu
+     justru keluhan yang satunya lagi. */
+  var INTIP = 1 / 8;
+
+  function ukur() {
+    var w = slide[0].offsetWidth;
+    var sela = Math.round(w * 0.06);
+    rel.style.gap = sela + "px";
+    var lebar = Math.round(w + sela + w * INTIP);
+    korsel.style.maxWidth = lebar + "px";
+    if (ket) ket.style.maxWidth = lebar + "px";
   }
 
-  /* Kartu ujung DIPATOK ke margin, tidak ditengahkan.
-     Kalau kartu pertama ditengahkan, sisi kirinya menganga kosong dan
-     terbaca seperti ada yang hilang, apalagi sekarang produknya baru dua
-     dan memang tidak ada tetangga kiri. Dengan dijepit begini, kartu ujung
-     rata dengan margin halaman dan yang di tengah tetap ditengahkan.
-     Aturannya ikut jalan sendiri begitu produk ketiga ditambahkan. */
+  /* Kartu ujung dipatok ke tepi wadah, tidak ditengahkan. Sejak wadahnya
+     disempitkan, dua duanya menghasilkan hal yang sama untuk dua kartu, tapi
+     penjepitan ini yang bikin aturannya tetap benar begitu produk ketiga
+     ditambahkan. */
   function posisi(i) {
     var s = slide[i];
-    var m = margin();
     var tengah = layar.clientWidth / 2 - (s.offsetLeft + s.offsetWidth / 2);
-    var maks = m;                                   // sisi kiri rel rata margin
-    var min  = layar.clientWidth - rel.scrollWidth - m;  // sisi kanan rata margin
-    if (min > maks) min = maks;                     // rel lebih sempit dari layar
+    var maks = 0;
+    var min  = layar.clientWidth - rel.scrollWidth;
+    if (min > maks) min = maks;
     return Math.max(min, Math.min(maks, tengah));
   }
 
@@ -467,6 +478,7 @@
   function geser(i, langsung) {
     idx = Math.max(0, Math.min(slide.length - 1, i));
     pasangKeadaan();
+    ukur();
     var x = posisi(idx);
     if (langsung || pelan || typeof gsap === "undefined") {
       rel.style.transform = "translateX(" + x + "px)";
