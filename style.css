@@ -307,6 +307,10 @@ a { color: inherit; text-decoration: none; }
   .js-anim [data-sc] { opacity: 1; }
 }
 
+/* .btn sekarang TIDAK DIPAKAI markup mana pun. Tombol Buka Atmosight dan Buka
+   Smokewatch dibuang atas permintaan user, dan tugasnya diambil alih .sc-nama.
+   Aturannya sengaja ditinggal, dia komponen dasar dan bagian #tentang serta
+   footer yang masih hidden hampir pasti membutuhkannya waktu dibuka nanti. */
 .btn {
   display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
   font-family: var(--font-ui); font-weight: 700; font-size: 15px; border-radius: var(--radius-pill);
@@ -390,14 +394,13 @@ section { padding: 30px 0; }
      dipakai transform juga dan durasinya jauh lebih pendek dari tweennya. */
   transition: transform .45s cubic-bezier(.22,.74,.28,1);
 }
-/* Dibatasi TINGGI, bukan cuma lebar. Gambarnya 1400x875, rasio 1,6, jadi
-   50vh tinggi berarti 80vh lebar. Batas tinggi itu yang bikin kartu, judul,
-   keterangan, dan tombolnya muat sekali layar di laptop. Sebelumnya cuma
-   dibatasi lebar, dan di layar lebar kartunya jadi setinggi 576 px sehingga
-   tombol Buka Atmosight jatuh di bawah lipatan. */
+/* Batas tingginya DILEPAS lagi, kembali ke ukuran semula. Dulu dipasang
+   supaya tombol Buka Atmosight tidak jatuh di bawah lipatan. Tombol itu
+   sekarang sudah tidak ada dan keterangannya jauh lebih pendek, jadi
+   alasannya gugur dan kartunya boleh besar lagi. */
 .sc-slide {
   flex: 0 0 auto;
-  width: min(62vw, calc(50vh * 1.6), 980px);
+  width: min(64vw, 1000px);
   margin: 0;
 }
 /* Kartu lanskap. Gambarnya 1400x875, rasio 1,6, jadi memang sudah lanskap
@@ -445,25 +448,49 @@ section { padding: 30px 0; }
 /* Keterangan di bawah kartu. Yang tidak aktif disembunyikan, dan aturan ini
    WAJIB, sebab .sc-kap itu display flex dan flex mengalahkan bawaan browser
    untuk atribut hidden. */
-/* Tiga aturan teks ini WARISAN kartu lama dan masih dipakai keterangan
-   korsel. Namanya sengaja tidak diganti supaya diff-nya kecil dan supaya
-   jelas dia elemen yang sama, cuma pindah tempat. */
-.card-kind {
-  font-family: var(--font-mono); font-weight: 700; font-size: 11px;
-  letter-spacing: .12em; text-transform: uppercase; color: var(--variant);
-}
-.card-title {
+/* Nama produk SEBARIS dengan daftar modelnya. Diminta user, dan memang lebih
+   masuk akal, chip itu menerangkan produk di sebelahnya jadi tidak perlu
+   turun baris. align-items baseline supaya chip duduk sejajar dengan garis
+   dasar huruf, bukan sejajar tengah kotak yang jauh lebih tinggi. */
+.sc-judul { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 16px; }
+
+/* Nama produk ADALAH tombolnya sekarang. Tombol Buka Atmosight dan Buka
+   Smokewatch dibuang, diminta user, dan namanya yang menggantikan tugasnya.
+   Kotaknya ada dari awal tapi tembus pandang, jadi tata letaknya tidak
+   melompat waktu disorot. Yang berubah cuma isian warnanya.
+   Bayangan kerasnya baru muncul waktu disorot, itu yang bikin dia terasa
+   naik ke depan, sejalan dengan tombol lain di halaman ini. */
+.sc-nama {
   font-family: var(--font-display); font-weight: 700;
   font-size: clamp(26px, 2.6vw, 36px); line-height: 1; letter-spacing: -.01em;
-  margin: 10px 0 0;
+  color: var(--ink); text-decoration: none;
+  padding: 10px 16px;
+  border: var(--bw) solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  box-shadow: 0 0 0 0 var(--ink);
+  transition: background .22s ease, color .22s ease,
+              box-shadow .16s ease, transform .16s ease;
 }
-.card-desc { margin: 12px 0 0; font-size: 16px; line-height: 1.6; color: var(--variant); max-width: 46ch; }
+.sc-nama:hover {
+  background: var(--lime);
+  color: var(--on-lime);
+  box-shadow: var(--shadow-sm);
+  transform: translate(-3px, -3px);
+}
+/* Ditekan, dia turun menempel. Aturan fisik yang sama dengan .btn dan .pill,
+   jangan dibedakan, itu yang bikin gaya ini terasa satu bahasa. */
+.sc-nama:active { transform: translate(0, 0); box-shadow: none; }
 
-.sc-ket { margin: 30px auto 0; min-height: 210px; }
+.card-desc { margin: 16px 0 0; font-size: 16px; line-height: 1.6; color: var(--variant); max-width: 46ch; }
+
+/* min-height turun dari 210 ke 130. Isinya sekarang cuma dua baris, dan
+   angka lama menyisakan lubang kosong di bawahnya. Tetap perlu ADA supaya
+   tata letak tidak melompat waktu berganti produk, keterangan Smokewatch
+   chip-nya lima dan bisa membungkus jadi dua baris di layar sempit. */
+.sc-ket { margin: 30px auto 0; min-height: 130px; }
 .sc-kap { display: flex; flex-direction: column; align-items: flex-start; }
 .sc-kap[hidden] { display: none; }
-.sc-kap .card-title { margin: 8px 0 0; }
-.sc-kap .btn { margin-top: 24px; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0 0; }
 .chip {
@@ -475,7 +502,7 @@ section { padding: 30px 0; }
 /* Tombol TETAP varian beraksen. Di kartu yang sudah dikosongkan begini dia
    satu satunya warna kuat, jadi justru jelas mana yang harus diklik.
    Minimalis itu menyisakan yang perlu, bukan memucatkan semuanya. */
-.sc-kap .btn .material-symbols-outlined { font-size: 18px; }
+
 
 /* ---- Tim, daftar nama berhuruf raksasa di atas latar hitam ----
    BUKAN kartu lagi. Kartu itu bentuk paling netral, dan Showcase persis di
@@ -649,7 +676,8 @@ footer a.f-link { color: var(--lime); border-bottom: 2px solid var(--lime); }
   .sc-panah .material-symbols-outlined { font-size: 22px; }
   .sc-panah--kiri  { left: 4px; }
   .sc-panah--kanan { right: 4px; }
-  .sc-ket { min-height: 250px; }
+  .sc-ket { min-height: 170px; }
+  .sc-judul { gap: 10px 12px; }
   .sc-lead { margin-bottom: 34px; }
   .about-band { padding: 8px 0 6px; }
 }
