@@ -415,6 +415,44 @@ section { padding: 30px 0; }
 .sc-shot img { width: 100%; height: auto; display: block; }
 .sc-shot--atmos { background: #e6feff; }
 .sc-shot--smoke { background: #ddf2ee; }
+
+/* ---- Kartu Showcase memuat app-nya SUNGGUHAN ----
+   Bukan tangkapan layar. Di dalam kartu ada iframe berisi Atmosight dan
+   Smokewatch yang betul betul jalan, dengan data hari ini.
+
+   BINGKAINYA DIRENDER PADA UKURAN DESKTOP 1400x875 LALU DIKECILKAN pakai
+   transform, bukan diberi lebar sebesar kartunya. Ini bagian yang paling
+   mudah salah. Kalau iframe-nya dibiarkan selebar kartu, app di dalamnya
+   membaca dirinya sebagai layar sempit dan pindah ke tata letak HP, lengkap
+   dengan bilah bawah dan legenda tegak. Yang tampil jadi bentuk yang sama
+   sekali lain dari kartu yang dia gantikan. Dengan dirender lebar lalu
+   dikecilkan, hasilnya persis tangkapan layar lama, cuma hidup.
+
+   1400x875 itu ukuran gambar poster yang dia timpa, rasionya 1,6, jadi
+   tingginya otomatis pas dan tidak ada yang perlu disamakan tangan.
+   Angka skalanya dihitung anim.js, sebab lebar kartu ikut vw. */
+/* display:block WAJIB. Kartunya sekarang <a>, dan <a> itu inline, sedangkan
+   aturan .sc-shot di atas memakai overflow:hidden yang tidak berlaku benar
+   pada elemen inline. */
+.sc-shot { position: relative; display: block; }
+.sc-bingkai {
+  position: absolute; top: 0; left: 0;
+  width: 1400px; height: 875px;
+  border: 0; display: block;
+  transform-origin: top left;
+  /* Poster di bawahnya baru dilepas setelah app-nya betul betul siap, kalau
+     tidak ada sekejap kartu kosong berwarna alas peta. */
+  opacity: 0; transition: opacity .45s ease;
+  /* Isinya tidak boleh menadah tetikus sama sekali. Yang menadah tudung di
+     atasnya, dan tudung itu bagian dari tautan. */
+  pointer-events: none;
+}
+.sc-bingkai.siap { opacity: 1; }
+/* Tudung penadah klik. Menutup seluruh kartu di atas bingkai, dan karena dia
+   di dalam <a>, klik di mana pun membuka app-nya. Sekalian ini yang bikin
+   tombol tombol di dalam kartu tidak berfungsi, tanpa perlu melumpuhkan
+   apa pun di dalam app-nya. */
+.sc-tudung { position: absolute; inset: 0; z-index: 3; }
 /* Yang bukan kartu aktif diredupkan, jadi jelas mana yang sedang dibicarakan
    keterangan di bawah. Bukan disembunyikan, dia justru harus terlihat sebagai
    ajakan untuk digeser. */
@@ -488,8 +526,18 @@ section { padding: 30px 0; }
    angka lama menyisakan lubang kosong di bawahnya. Tetap perlu ADA supaya
    tata letak tidak melompat waktu berganti produk, keterangan Smokewatch
    chip-nya lima dan bisa membungkus jadi dua baris di layar sempit. */
-.sc-ket { margin: 30px auto 0; min-height: 130px; }
-.sc-kap { display: flex; flex-direction: column; align-items: flex-start; }
+/* perspective WAJIB ada di induknya, kalau tidak rotationX cuma memipihkan
+   keterangan lurus lurus, bukan memutarnya. Angkanya sengaja longgar, 900 px,
+   supaya putarannya terbaca sebagai membalik dan bukan menerjang layar.
+   min-height itu yang menahan tata letak waktu keterangannya berganti,
+   tanpa dia bagian bawah halaman tersentak tiap kartu digeser. */
+.sc-ket { margin: 30px auto 0; min-height: 130px; perspective: 900px; }
+.sc-kap {
+  display: flex; flex-direction: column; align-items: flex-start;
+  /* Punggungnya tidak perlu digambar, dan membiarkannya digambar bikin
+     tulisannya sekilas terbaca terbalik di tengah putaran. */
+  backface-visibility: hidden;
+}
 .sc-kap[hidden] { display: none; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0 0; }

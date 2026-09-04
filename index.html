@@ -101,17 +101,29 @@
         <div class="sc-korsel" data-sc>
           <div class="sc-layar">
             <div class="sc-rel" id="sc-rel">
+              <!-- Kartunya <a>, bukan <div>. Seluruh kartu itu satu tautan ke
+                   app-nya, jadi klik di mana pun langsung membuka Atmosight.
+                   Gambarnya tinggal jadi poster, dia yang tampil sebelum app
+                   sungguhannya selesai dimuat, dan tetap jadi tampilan akhir
+                   di HP, di sambungan hemat data, dan buat yang memilih
+                   reduced-motion. Bingkai app-nya disisipkan anim.js. -->
               <article class="sc-slide" data-nama="atmosight">
-                <div class="sc-shot sc-shot--atmos">
+                <a class="sc-shot sc-shot--atmos" href="atmosight/"
+                   data-embed="atmosight/?embed=1"
+                   data-judul="Peta angin Atmosight yang sedang berjalan">
                   <img src="img/atmosight.webp" width="1400" height="875" decoding="async"
                        alt="Tampilan awal Atmosight, peta angin seluruh Indonesia dari model GFS" />
-                </div>
+                  <span class="sc-tudung" aria-hidden="true"></span>
+                </a>
               </article>
               <article class="sc-slide" data-nama="smokewatch">
-                <div class="sc-shot sc-shot--smoke">
+                <a class="sc-shot sc-shot--smoke" href="smokewatch/"
+                   data-embed="smokewatch/?embed=1"
+                   data-judul="Peta ISPU Smokewatch yang sedang berjalan">
                   <img src="img/smokewatch.webp" width="1400" height="875" decoding="async"
                        alt="Tampilan awal Smokewatch, peta ISPU seluruh Indonesia dari model CAMS" />
-                </div>
+                  <span class="sc-tudung" aria-hidden="true"></span>
+                </a>
               </article>
             </div>
           </div>
@@ -131,7 +143,7 @@
         <div class="sc-ket" id="sc-ket" data-sc>
           <div class="sc-kap" data-nama="atmosight">
             <div class="sc-judul">
-              <a class="sc-nama" href="atmosight/">Atmosight</a>
+              <a class="sc-nama" href="atmosight/">Explore Atmosight</a>
               <div class="chips">
                 <span class="chip">GFS</span><span class="chip">ECMWF</span><span class="chip">WRF</span>
               </div>
@@ -140,7 +152,7 @@
           </div>
           <div class="sc-kap" data-nama="smokewatch" hidden>
             <div class="sc-judul">
-              <a class="sc-nama" href="smokewatch/">Smokewatch</a>
+              <a class="sc-nama" href="smokewatch/">Explore Smokewatch</a>
               <div class="chips">
                 <span class="chip">CAMS</span><span class="chip">WRF-Chem</span><span class="chip">CAMx</span><span class="chip">CMAQ</span><span class="chip">Flexpart</span>
               </div>

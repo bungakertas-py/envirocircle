@@ -469,16 +469,133 @@
 
   function pasangKeadaan() {
     slide.forEach(function (s, i) { s.classList.toggle("aktif", i === idx); });
-    var nama = slide[idx].getAttribute("data-nama");
-    kap.forEach(function (k) { k.hidden = k.getAttribute("data-nama") !== nama; });
     kiri.disabled  = idx === 0;
     kanan.disabled = idx === slide.length - 1;
   }
 
+  /* Keterangan di bawah kartu MEMBALIK ke atas bawah waktu produknya berganti,
+     diminta user. Yang lama membalik pergi dulu, baru yang baru membalik
+     masuk dari sisi seberangnya, jadi geraknya terbaca sebagai satu benda
+     yang diputar, bukan dua benda yang bergantian muncul.
+
+     BERURUTAN, bukan bersamaan, dan itu disengaja. Kedua keterangan itu
+     elemen biasa yang ikut mengisi ruang, bukan ditumpuk absolut. Kalau dua
+     duanya ditampilkan bersamaan demi menyilangkan animasinya, tingginya jadi
+     dua kali lipat sekejap dan seluruh bagian bawah halaman tersentak.
+     min-height 130px pada .sc-ket yang menahan sisa goyangannya.
+
+     Arahnya ikut arah geseran. Ke kanan, keterangannya membalik ke atas.
+     Ke kiri, membalik ke bawah. Kalau tidak diikutkan, geraknya terasa
+     melawan panah yang barusan ditekan. */
+  var LAMA_KELUAR = 0.26, LAMA_MASUK = 0.34;
+
+  function tukarKet(nama, arah, langsung) {
+    var baru = null, lama = null;
+    kap.forEach(function (k) {
+      if (k.getAttribute("data-nama") === nama) baru = k;
+      else if (!k.hidden) lama = k;
+    });
+    if (!baru) return;
+
+    /* Tanpa GSAP, tanpa gerak, atau memang sudah yang benar yang tampil,
+       tukar apa adanya. Ini juga jalur yang dipakai waktu halaman baru dibuka
+       dan waktu jendela diubah ukurannya. */
+    if (langsung || pelan || typeof gsap === "undefined" || !lama || lama === baru) {
+      /* Balikan yang sedang jalan harus dihentikan dulu. Kalau tidak, jendela
+         yang diubah ukurannya di tengah animasi menyisakan tween yang masih
+         menulisi elemen yang barusan kita rapikan. */
+      if (typeof gsap !== "undefined") gsap.killTweensOf(kap);
+      kap.forEach(function (k) { k.hidden = k !== baru; });
+      if (typeof gsap !== "undefined") gsap.set(baru, { clearProps: "all" });
+      return;
+    }
+
+    gsap.killTweensOf(kap);
+    gsap.to(lama, {
+      rotationX: arah * 90, opacity: 0, duration: LAMA_KELUAR, ease: "power2.in",
+      onComplete: function () {
+        lama.hidden = true;
+        gsap.set(lama, { clearProps: "all" });
+        baru.hidden = false;
+        gsap.fromTo(baru,
+          { rotationX: arah * -90, opacity: 0 },
+          { rotationX: 0, opacity: 1, duration: LAMA_MASUK, ease: "power3.out",
+            clearProps: "transform,opacity" });
+      },
+    });
+  }
+
+  /* =================================================================
+     KARTU HIDUP. Kartu Showcase memuat Atmosight dan Smokewatch yang
+     SUNGGUHAN, di dalam iframe, bukan memajang tangkapan layar.
+
+     Alasannya bukan pamer. Tangkapan layar itu basi tiap kali palet, tata
+     letak, atau lambangnya berubah, dan sudah dua kali harus ditambal
+     tangan pakai PIL. Yang hidup tidak pernah basi, dan pengunjung
+     langsung melihat cuaca hari ini, bukan cuaca bulan lalu.
+
+     Yang dijaga di sini beratnya. Tiap app cuma menarik satu bingkai waktu,
+     jadi sekitar satu megabita, dan itu pun baru ditarik kalau bagian
+     Showcase betul betul terlihat. Yang di HP, yang sambungannya hemat
+     data, dan yang memilih reduced-motion tetap dapat poster diam.
+     ================================================================= */
+  var pelitData = !!(navigator.connection && navigator.connection.saveData);
+  /* Di bawah 700 px kartunya cuma sepertiga lebar app, tulisannya sudah tidak
+     terbaca hidup maupun diam, jadi memuat dua app penuh di sana cuma
+     menghabiskan kuota orang tanpa memberi apa apa. */
+  var cukupLebar = window.innerWidth >= 700;
+  var bolehHidup = !pelan && !pelitData && cukupLebar;
+  var terlihat = false;
+
+  function hidupkan(i) {
+    if (!bolehHidup || !terlihat) return;
+    var shot = slide[i] && slide[i].querySelector(".sc-shot");
+    if (!shot || shot.getAttribute("data-hidup")) return;
+    var src = shot.getAttribute("data-embed");
+    if (!src) return;
+    shot.setAttribute("data-hidup", "1");
+
+    var f = document.createElement("iframe");
+    f.className = "sc-bingkai";
+    f.setAttribute("title", shot.getAttribute("data-judul") || "");
+    f.setAttribute("scrolling", "no");
+    /* Tidak boleh ikut urutan tab dan tidak perlu dibacakan pembaca layar.
+       Yang mewakili kartu ini di dua duanya tautan pembungkusnya, dan poster
+       di bawahnya masih membawa alt yang menjelaskan isinya. */
+    f.setAttribute("tabindex", "-1");
+    f.setAttribute("aria-hidden", "true");
+    f.addEventListener("load", function () { f.classList.add("siap"); });
+    shot.insertBefore(f, shot.querySelector(".sc-tudung"));
+    f.src = src;
+    skala();
+  }
+
+  /* Bingkainya dirender 1400 px lalu dikecilkan. Lebar kartu ikut vw, jadi
+     angkanya dihitung ulang tiap kali korselnya diukur ulang. */
+  function skala() {
+    slide.forEach(function (s) {
+      var shot = s.querySelector(".sc-shot");
+      var f = shot && shot.querySelector(".sc-bingkai");
+      /* clientWidth, BUKAN offsetWidth. offsetWidth ikut menghitung garis
+         tepi 3 px, sedangkan bingkai ini ditaruh di dalam garis tepi, sama
+         seperti poster yang width:100%. Pakai offsetWidth dan gambarnya
+         kelebihan enam piksel, tepi kanan bawahnya terpotong. */
+      if (!f || !shot.clientWidth) return;
+      f.style.transform = "scale(" + (shot.clientWidth / 1400) + ")";
+    });
+  }
+
   function geser(i, langsung) {
+    var dulu = idx;
     idx = Math.max(0, Math.min(slide.length - 1, i));
     pasangKeadaan();
+    /* Arah dihitung dari perpindahan yang BENAR benar terjadi, bukan dari
+       nilai yang diminta. Panah di ujung dijepit, dan tanpa ini tekanan yang
+       tidak menggeser apa apa masih memicu animasi membalik. */
+    tukarKet(slide[idx].getAttribute("data-nama"), idx > dulu ? 1 : -1, langsung);
     ukur();
+    hidupkan(idx);
+    skala();
     var x = posisi(idx);
     if (langsung || pelan || typeof gsap === "undefined") {
       rel.style.transform = "translateX(" + x + "px)";
@@ -523,6 +640,26 @@
      sebelum termuat tingginya nol sehingga offsetLeft bisa meleset. Dihitung
      ulang sekali lagi setelah semuanya selesai memuat. */
   window.addEventListener("load", function () { geser(idx, true); });
+
+  /* Pemicunya bagian Showcase masuk layar, bukan halaman selesai dimuat.
+     Kalau dimuat di awal, dua app ikut berebut jalur dengan hero yang justru
+     hal pertama yang dilihat orang. Cadangan kalau IntersectionObserver tak
+     ada, langsung hidupkan saja, browser tanpa dia sudah sangat tua. */
+  var seksi = document.getElementById("showcase") || korsel;
+  if (!bolehHidup) {
+    /* tidak ada yang perlu dipasang, poster diam sudah jadi tampilan akhir */
+  } else if (typeof IntersectionObserver === "function") {
+    var mata = new IntersectionObserver(function (entri) {
+      if (!entri[0].isIntersecting) return;
+      mata.disconnect();
+      terlihat = true;
+      hidupkan(idx);
+    }, { rootMargin: "200px 0px" });
+    mata.observe(seksi);
+  } else {
+    terlihat = true;
+    hidupkan(idx);
+  }
 
   geser(0, true);
 })();

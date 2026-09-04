@@ -57,6 +57,21 @@ const _mp = new URLSearchParams(location.search).get("model");
 // dimatikan masih bisa dibuka orang cuma dengan mengetik ?model=wrf di alamat.
 const MODEL_ID = modelHidup(_mp) ? _mp : "gfs";
 const MODEL = MODELS[MODEL_ID];
+
+/* ---------------------------------------------------------------------
+   MODE SEMATAN (?embed=1). Dipakai kartu Showcase di landing.
+
+   Kartu itu tidak lagi memajang tangkapan layar. Dia memasang app INI
+   sungguhan di dalam iframe, jadi yang dilihat orang peta hidup dengan data
+   hari ini, bukan gambar yang basi begitu palet atau tata letaknya berubah.
+
+   Yang dimatikan CUMA dua hal, interaksi peta dan pendaftaran service worker.
+   Panel dan tombolnya sengaja DIBIARKAN tampil, sebab kartunya memang harus
+   terbaca sebagai app yang utuh. Tombolnya tidak berfungsi bukan karena
+   dilumpuhkan di sini, tapi karena seluruh kartu di landing ditutup satu
+   tudung tautan, jadi klik di mana pun membuka app-nya.
+   --------------------------------------------------------------------- */
+const EMBED = new URLSearchParams(location.search).get("embed") === "1";
 /* SUMBER DATA SEMENTARA.
    Pohon gabungan ini sengaja dikirim tanpa keluaran pipeline, dan di GitHub
    Pages memang tidak ada yang memasak data. Supaya petanya tetap berisi,
@@ -437,6 +452,15 @@ const map = L.map("map", {
   wheelPxPerZoomLevel: 120,// scroll-zoom lebih landai → terasa lebih mulus
   wheelDebounceTime: 30,
 });
+
+/* Peta yang disematkan tidak boleh digeser atau di-zoom. Tudung tautan di
+   landing sudah menadah klik, tapi ini lapis kedua yang penting: tanpa dia,
+   roda tetikus yang kebetulan lewat di atas kartu bisa men-zoom peta alih
+   alih menggulung halaman, dan pengunjung terjebak di dalam kartu. */
+if (EMBED) {
+  ["dragging", "scrollWheelZoom", "doubleClickZoom", "touchZoom", "boxZoom", "keyboard", "tap"]
+    .forEach((k) => { if (map[k] && map[k].disable) map[k].disable(); });
+}
 
 // Kotak inti yang WAJIB selalu tampak penuh: India–Pasifik Barat, Cina Selatan–
 // tengah Australia. Bingkai tampilan diturunkan dari kotak ini, diperlebar
@@ -2700,7 +2724,9 @@ async function init() {
 init();
 
 // PWA: daftarkan service worker (cache shell berversi; data cuaca tetap online).
-if ("serviceWorker" in navigator) {
+// Dilewati di mode sematan. Kartu Showcase bukan tempat orang memasang app,
+// dan mendaftarkan SW dari dalam iframe cuma menambah kerja tanpa gunanya.
+if (!EMBED && "serviceWorker" in navigator) {
   window.addEventListener("load", () =>
     navigator.serviceWorker.register("sw.js").catch((e) => console.warn("SW gagal:", e)));
 }
