@@ -38,10 +38,16 @@ const modelHidup = (id) => !!MODELS[id] && MODEL_AKTIF[id] === true;
 // kelihatan, tapi MATI dan tidak bisa dipilih. Tidak ada pipeline, tidak ada
 // data, tidak ada base path. Kalau nanti salah satunya betul betul digarap,
 // pindahkan dia ke MODELS di atas lalu nyalakan lewat MODEL_AKTIF.
-// Daftarnya dipatok user, jadi CUMA dua ini. ECMWF sempat ada di sini lalu
-// dicabut atas permintaan user, padahal chip di kartu Showcase landing page
-// masih menyebut ECMWF. Dua tempat itu memang tidak sama, dan itu disengaja.
+// Daftarnya dipatok user. ECMWF dipasang lagi, dan angkanya BUKAN taksiran.
+// Dicek langsung ke data.ecmwf.int pada 4 Sep 2026, open data yang gratis
+// cuma menyediakan SATU resolusi, ifs/0p25, yaitu 0,25 derajat atau sekitar
+// 28 km. Tidak ada 0p4 lagi, dan HRES 9 km itu berbayar jadi tidak bisa
+// dipakai. Angka 28 km juga sebasis dengan GFS di daftar ini, dua duanya
+// 0,25 derajat.
+// Aliran yang dipakai nanti "oper", berkasnya
+// https://data.ecmwf.int/forecasts/<YYYYMMDD>/<HH>z/ifs/0p25/oper/
 const MODEL_PAJANGAN = [
+  { label: "ECMWF - 28 km" },
   { label: "WRF - 9 km" },
   { label: "WRFDA - 9 km" },
 ];
