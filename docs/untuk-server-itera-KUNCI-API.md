@@ -144,9 +144,36 @@ python wrf_itera_run.py ~/wrf_post/wrf_itera_<tanggal>00.nc
 Jadi `GH_TOKEN` **boleh dilepas** kalau langkah unggah Release dimatikan.
 
 **Satu pengecualian.** Kalau ternyata port 22 dari server ke hostingan buntu,
-rencana cadangannya memakai GitHub Release sebagai tempat singgah. Kalau jalur
-itu yang dipakai, `GH_TOKEN` tetap perlu. Jadi jangan buru buru menghapus
-tokennya sebelum uji port 22 dijawab.
+rencana cadangannya memakai GitHub Release sebagai tempat singgah. Server
+menaruh lewat HTTPS, hostingan menjemput lewat HTTPS. Kalau jalur itu yang
+dipakai, `GH_TOKEN` justru **tetap perlu**, cuma isinya berubah dari berkas nc
+jadi keluaran jadi.
+
+Jadi urutannya begini. Jawab dulu uji port 22. **Tembus** berarti `GH_TOKEN`
+boleh dilepas. **Buntu** berarti dia malah jadi tulang punggung.
+
+Melepasnya juga menyelesaikan satu masalah lama. Aset Release selama ini
+menumpuk tanpa batas sebab `cleanup.sh` tidak pernah dijadwalkan. Berhenti
+mengunggah berarti berhenti menumpuk.
+
+### Yang MASIH bergantung GitHub, jangan salah kira
+
+Gampang mengira kepindahan ini membuat seluruh sistem lepas dari GitHub.
+Belum, dan ini perlu diluruskan sebab menentukan apa yang boleh dimatikan.
+
+| masih bergantung GitHub | kenapa |
+|---|---|
+| kode situs | hostingan menariknya dengan `git pull` dari repo frontend |
+| **seluruh data yang tampil sekarang** | situs di hostingan masih menumpang ke keluaran Pages repo lama |
+| pipeline GFS dan CAMS | masih jalan di runner GitHub sampai kalian memindahkannya |
+
+Baris kedua yang paling penting. Selama `catalog.json` lokal di hostingan masih
+404, situsnya menumpang ke keluaran repo lama. **Mematikan repo lama sekarang
+membuat petanya ikut kosong.**
+
+Yang benar benar lepas dari GitHub setelah kepindahan ini cuma **satu jalur**,
+yaitu berkas nc WRF, yang tadinya harus naik ke Release lalu diturunkan lagi.
+Itu yang membuat `GH_TOKEN` tidak perlu, bukan karena seluruh sistem lepas.
 
 ---
 
