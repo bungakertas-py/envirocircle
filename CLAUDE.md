@@ -90,10 +90,111 @@ cyan atau teal yang digelapkan. Ini sudah dua kali kena.
 Situs ini menuju **server sendiri, lepas dari GitHub Actions**. Tidak ada
 workflow di pohon ini dan itu disengaja. Git dipakai sebagai cadangan saja.
 
-Dua hal tentang server tujuannya yang sudah diketahui. **`rsync` TIDAK ada di
-sana**, jadi kirim tarball lalu bongkar, jangan pakai rsync. Dan **disknya 96
-persen penuh**, sisa sekitar 32 GB, jadi hati hati menaruh keluaran pipeline
-yang besar. `node` juga tidak ada.
+Bentuknya sudah diputuskan pemiliknya, **situs plus datanya sekalian**. Bukan
+cuma memindahkan halamannya. Keluaran pipeline ikut naik ke hostingan, lalu
+`DATA_JAUH` dikosongkan supaya jalurnya balik jadi relatif dan hostingan itu
+berdiri sendiri, tidak lagi menumpang GitHub Pages.
+
+Rinciannya di `docs/serah-terima.md`. Yang di bawah ini ringkasan yang
+langsung mengubah cara menulis kode.
+
+### Hostingan tujuannya, hasil ukur 5 September 2026
+
+Semua di bawah ini **diukur langsung**, bukan dibaca dari dokumentasi.
+
+**Server webnya LiteSpeed, bukan Apache.** Terbaca dari `lsapi_module` di
+`.htaccess` bawaan dan folder `~/lscache`. Header `Server` disembunyikan.
+HTTPS memberi HTTP/2.
+
+**Kompresi brotli SUDAH HIDUP BAWAAN.** JSON 347 KB turun jadi 104 KB tanpa
+diatur apa apa. Jangan buang waktu mengurusnya.
+JEBAKAN, berkas kecil memang dilewati. **Uji kompresi wajib pakai berkas
+ratusan KB**, kalau tidak kesimpulannya salah. Sudah pernah salah baca begitu.
+
+**Yang TIDAK ada bawaan dan harus dikirim lewat `.htaccess`:**
+- `cache-control`, sama sekali tidak dipasang. GitHub Pages memasangnya
+  sendiri, hostingan ini tidak.
+- `Options -Indexes`. Daftar isi folder MENYALA bawaan, folder tanpa index
+  membalas 200 dan memajang seluruh isinya.
+
+`mod_expires` dan `mod_headers` terbukti jalan, sudah diuji sampai keluar
+`cache-control: public, max-age=3600` dan `access-control-allow-origin`.
+MIME `.json` sudah benar bawaan.
+
+**Jatah akun semuanya TANPA BATAS**, disk, inode, dan bandwidth. Yang dibatasi
+cuma addon domain, maksimal 5, dan kita tidak membutuhkannya sebab jalurnya
+berbasis folder. Jadi 866 berkas per app dan 250 MB data itu aman.
+
+**`rsync` TIDAK ada di sana**, jadi kirim tarball lalu bongkar. `node` dan
+`npm` juga tidak ada di PATH, tapi CloudLinux menyediakan `/opt/alt/alt-nodejs22`
+dan `/opt/alt/python39` lewat selector cPanel.
+
+**`python3` bawaan hostingan cuma 3.6.8, TUA.** Jangan dipakai untuk apa pun
+yang serius. Kalau pipeline betulan dijalankan di sana, pakai alt-python atau
+venv sendiri. `tar` 1.30, `git` 2.48.2, `php` 8.2.33.
+
+**Disknya 97 persen penuh dan memburuk cepat**, sisa 25 GB, turun 7 GB dalam
+dua hari. Itu disk fisik bersama semua pelanggan di mesin itu, bukan jatah
+kita. Kebutuhan kita cuma 250 MB jadi muat, tapi jangan menaruh keluaran
+mentah yang besar di sana.
+
+**SSH KADANG PUTUS.** Terjadi sungguhan waktu survei, satu dari tiga sambungan
+berturut turut kena `Connection timed out`, dua berikutnya tembus, sementara
+port 22 tetap terbuka dan web tetap 200. Bukan diblokir, cuma tidak stabil.
+**Skrip deploy JANGAN sekali tembak**, minimal tiga percobaan dengan jeda.
+
+**Tukar atomik bisa.** `ln -sfn` menimpa symlink yang sudah ada, sudah diuji
+bolak balik. Jadi pola bongkar ke folder baru lalu tukar symlink jalan di sana.
+
+**Hostingan bisa keluar ke GitHub.** `github.com` dan GitHub Pages dua duanya
+200 dari dalam server, dan `git` ada di sana. Jadi ada bentuk ketiga yang belum
+pernah dipakai, hostingan yang MENARIK sendiri lewat `git pull` dari cron,
+bukan didorong. Dicatat sebagai pilihan, belum diputuskan.
+
+### Alamat
+
+Jalurnya **berbasis folder**, `<akar>/atmosight` dan `<akar>/smokewatch`.
+JANGAN dipecah ke subdomain. Pohon ini memakai tautan relatif, `atmosight/`
+dari landing dan `../` dari tombol rumah di kedua app. Dipecah ke subdomain,
+tautan itu putus semua.
+
+Domain sungguhannya **belum hidup** waktu catatan ini ditulis, jadi pakai
+alamat sementara dari penyedia untuk menguji. Pohon ini semua tautannya
+relatif, jadi dia jalan apa adanya di bawah alamat mana pun.
+
+### Rahasia, TIDAK ADA di pohon ini dan jangan pernah dimasukkan
+
+Repo ini **PUBLIK**. Jangan pernah menaruh kunci, password, atau berkas `.env`
+di dalamnya.
+
+Pipeline membaca dua kunci dari environment.
+
+| variabel | untuk | wajib |
+|---|---|---|
+| `ADS_KEY` | Copernicus ADS, sumber data CAMS Smokewatch | ya |
+| `FIRMS_KEY` | NASA FIRMS, titik api | tidak, fitur mati tanpa dia |
+
+Ada juga beberapa saklar opsional, `SITE_DATA_URL`, `CAMS_RUN`,
+`WRF_JAM_MAX`, `WRF_WORKERS`, `WRF_JENDELA`, `WRF_ITERA_VELSTRIDE`,
+`WRF_ITERA_TRIM`, `WRF_ITERA_VERIFY`.
+
+`WRF_SANDI` dan `DT_SANDI` di kedua `app.js` itu gerbang sisi browser. Memang
+sudah terbaca publik sejak dulu, bukan kebocoran baru, tapi jangan
+diperlakukan sebagai pengaman sungguhan.
+
+### Menjalankan pipeline
+
+Import-nya datar, `from config import ...`, jadi **BUKAN `python -m`**.
+Yang benar masuk ke foldernya dulu.
+
+```
+cd backend/atmosight/pipeline && python run.py
+cd backend/smokewatch/pipeline && python run.py
+```
+
+`cfgrib` dan `eccodes` tidak diimpor langsung di kode mana pun tapi tetap
+WAJIB ada, xarray memakainya sebagai mesin pembaca GRIB. Kalau dibuang,
+galatnya baru muncul jauh di dalam saat runtime dan bunyinya membingungkan.
 
 ## Yang harus ditanya dulu, jangan diputuskan sendiri
 
