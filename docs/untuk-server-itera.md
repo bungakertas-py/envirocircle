@@ -540,6 +540,79 @@ bash deploy/kirim-data-ke-hostingan.sh
 `ASAL` menunjuk folder yang berisi `atmosight/data/output` dan
 `smokewatch/data/output`. Tidak ada yang perlu dipindah.
 
+### Persisnya mendarat di mana
+
+Ini koordinat yang paling penting, jadi ditulis tersurat. Isi kedua folder
+keluaran kalian harus berakhir di sini.
+
+```
+/home/<pengguna>/public_html/backend/atmosight/data/output/
+/home/<pengguna>/public_html/backend/smokewatch/data/output/
+```
+
+Dua folder itu **sudah ada** di hostingan, dibuat waktu situsnya dipasang.
+Kalian tinggal mengisinya.
+
+Jadi `catalog.json` buatan kalian mendarat sebagai
+`public_html/backend/atmosight/data/output/catalog.json`, dan gambar yang
+disebut di dalamnya duduk sebagai tetangganya di folder yang sama.
+
+**Jangan menyentuh apa pun di luar dua folder itu.** Sisi situsnya salinan
+kerja git, dan apa pun yang kalian taruh di sana akan tertimpa waktu situsnya
+diperbarui.
+
+### PERINGATAN, kiriman pertama LANGSUNG dipakai
+
+Ini yang paling penting di seluruh bagian ini, dan baru berlaku sejak
+5 September.
+
+Situsnya sekarang **memilih sumber datanya sendiri**. Dia mencoba data lokal di
+hostingan dulu. Kalau `catalog.json` lokal menjawab 404, dia mundur menumpang
+ke keluaran yang tersaji di GitHub Pages, hasil pipeline yang sama yang
+dijalankan di runner GitHub.
+
+Artinya, **detik kalian menaruh `catalog.json` di sana, situsnya berhenti
+menumpang dan langsung memakai punya kalian.** Tidak ada tombol, tidak ada
+pengumuman, tidak ada persetujuan siapa pun.
+
+Akibatnya satu, dan tolong dibaca dua kali.
+
+**Jangan menaruh keluaran yang belum utuh di hostingan.** Kalau `catalog.json`
+sudah ada tapi gambar gambarnya belum, atau layernya baru sebagian, situsnya
+akan memakai yang setengah itu dan **berhenti memakai data lengkap yang
+sebelumnya tersaji**. Dari sisi pengunjung itu terlihat seperti situsnya rusak,
+padahal cadangannya masih hidup dan baik baik saja.
+
+Tukar atomik melindungi dari kiriman yang setengah tertulis, tapi **tidak**
+melindungi dari kiriman yang utuh tapi isinya belum benar. Yang kedua itu
+tanggung jawab kalian.
+
+Jadi latihannya di tempat lain dulu. Kirim ke hostingan baru kalau keluarannya
+sudah lengkap dan sudah diadu dengan pembanding di bagian 5.
+
+### Cara memeriksa sesudah mengirim
+
+Situsnya menulis sumber yang sedang dipakai ke atribut `data-sumber` pada
+elemen `<html>`. Isinya `dekat` kalau memakai data kalian, `jauh` kalau masih
+menumpang.
+
+```
+curl -s <alamat-situs>/atmosight/ | grep -o 'data-sumber="[a-z]*"'
+```
+
+Perhatikan, itu ditulis oleh JavaScript setelah halaman dimuat, jadi `curl`
+biasa **tidak akan** menampilkannya. Cara yang bisa dipakai dari terminal,
+periksa berkasnya langsung.
+
+```
+curl -s -o /dev/null -w "%{http_code}\n" \
+  <alamat-situs>/backend/atmosight/data/output/catalog.json
+```
+
+`200` berarti data kalian sudah dipakai. `404` berarti belum ada dan situsnya
+masih menumpang. Kalau mau memastikan lewat mata, buka situsnya lalu lihat
+Console, ada baris `[data] sumber LOKAL` atau `[data] sumber menumpang`.
+
 ---
 
 ## 9. Fakta hostingan
