@@ -2,11 +2,39 @@
  * Membaca catalog.json + aset dari pipeline backend; angin = partikel + heatmap
  * kecepatan, hujan = heatmap laju hujan. Layout & gaya ala BMKG Signature.
  */
-/* SUMBER DATA SEMENTARA. Sama ceritanya dengan Atmosight, lihat komentar
-   panjang di atmosight/app.js. Kosongkan DATA_JAUH begitu pipeline CAMS
-   jalan di server sendiri, dia otomatis balik ke path relatif. */
+/* SUMBER DATA DIPILIH SENDIRI SAAT MUAT. Sama ceritanya dengan Atmosight,
+   penjelasan panjangnya ada di atmosight/app.js.
+
+   Singkatnya, yang DEKAT dicoba dulu baru yang JAUH. Di GitHub Pages tidak ada
+   data lokal jadi menumpang, di hostingan sebelum server mengirim juga
+   menumpang, dan begitu server mengirim dia pindah sendiri ke data lokal.
+   Tidak ada baris yang perlu disunting waktu pindah. */
+const DATA_DEKAT = "../backend/smokewatch/data/output/";
 const DATA_JAUH = "https://bungakertas-py.github.io/smokewatch/backend/data/output/";
-const DATA_BASE = DATA_JAUH || "../backend/smokewatch/data/output/";
+let DATA_BASE = DATA_DEKAT;
+
+async function ambilKatalog() {
+  for (const base of [DATA_DEKAT, DATA_JAUH]) {
+    if (!base) continue;
+    let res;
+    try {
+      res = await fetch(base + "catalog.json");
+    } catch (e) {
+      continue;                     // jaringan mati, coba sumber berikutnya
+    }
+    if (res.ok) { pakaiSumber(base); return res; }
+    if (res.status !== 404) { pakaiSumber(base); return res; }
+  }
+  return null;                      // semua 404 -> cangkang
+}
+
+function pakaiSumber(base) {
+  DATA_BASE = base;
+  const dekat = base === DATA_DEKAT;
+  document.documentElement.dataset.sumber = dekat ? "dekat" : "jauh";
+  console.info(`[data] sumber ${dekat ? "LOKAL" : "menumpang"}, ${base}`);
+}
+window.__sumberData = () => DATA_BASE;
 
 /* ---------------------------------------------------------------------
    MODE SEMATAN (?embed=1). Dipakai kartu Showcase di landing.
@@ -2804,8 +2832,8 @@ async function init() {
   try {
     let cat = null;
     try {
-      const catRes = await fetch(DATA_BASE + "catalog.json");
-      if (catRes.ok) cat = await catRes.json();
+      const catRes = await ambilKatalog();
+      if (catRes && catRes.ok) cat = await catRes.json();
     } catch (e) { /* jaringan/berkas tak ada -> jatuh ke cangkang di bawah */ }
     const avail = Object.keys((cat && cat.layers) || {});
     if (!avail.length) { cat = SHELL_CATALOG; dataMissing = true; }

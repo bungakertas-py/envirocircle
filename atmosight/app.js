@@ -88,7 +88,57 @@ const EMBED = new URLSearchParams(location.search).get("embed") === "1";
    Cuma berlaku untuk GFS. Model lain kalau dinyalakan tetap memakai path
    relatifnya sendiri, sebab keluarannya memang tidak ada di repo lama itu. */
 const DATA_JAUH = "https://bungakertas-py.github.io/atmosight/backend/data/output/";
-const DATA_BASE = (DATA_JAUH && MODEL_ID === "gfs") ? DATA_JAUH : MODEL.base;
+
+/* SUMBER DATA DIPILIH SENDIRI SAAT MUAT, bukan dipatok di sini.
+
+   Dulu baris ini memaksa DATA_JAUH menang selalu. Akibatnya, waktu situsnya
+   dipasang di server sendiri dan pipeline di sana SUDAH mengirim datanya,
+   petanya TETAP menarik dari GitHub Pages dan data lokalnya diabaikan. Yang
+   membetulkannya cuma menyunting kode lalu deploy ulang, dan itu langkah yang
+   gampang lupa.
+
+   Sekarang urutannya dicoba, yang DEKAT dulu baru yang JAUH.
+     1. `../backend/atmosight/data/output/` di server yang sama
+     2. kalau itu 404, baru menumpang ke keluaran repo lama
+
+   Jadi satu berkas yang sama jalan di tiga keadaan tanpa diubah sama sekali.
+   Di GitHub Pages tidak ada data lokal, jadi menumpang. Di hostingan sebelum
+   server mengirim, juga menumpang. Begitu server mengirim, dia pindah sendiri
+   ke data lokal pada muat ulang berikutnya.
+
+   404 SAJA yang membuatnya mundur ke sumber berikutnya. 500 atau JSON rusak
+   itu kerusakan sungguhan dan tetap dilaporkan, jangan disembunyikan di balik
+   cadangan yang kebetulan hidup.
+
+   Cuma berlaku untuk GFS. Model lain memakai path relatifnya sendiri, sebab
+   keluarannya memang tidak ada di repo lama itu. */
+let DATA_BASE = MODEL.base;
+
+async function ambilKatalog() {
+  const urut = [MODEL.base];
+  if (DATA_JAUH && MODEL_ID === "gfs") urut.push(DATA_JAUH);
+  for (const base of urut) {
+    let res;
+    try {
+      res = await fetch(base + "catalog.json");
+    } catch (e) {
+      continue;                     // jaringan mati, coba sumber berikutnya
+    }
+    if (res.ok) { pakaiSumber(base); return res; }
+    if (res.status !== 404) { pakaiSumber(base); return res; }
+  }
+  return null;                      // semua 404 -> mode kosong
+}
+
+function pakaiSumber(base) {
+  DATA_BASE = base;
+  const dekat = base === MODEL.base;
+  /* Ditulis ke <html> supaya bisa diperiksa tanpa membuka console, dan supaya
+     dump DOM waktu menguji deploy bisa membuktikan sumbernya yang mana. */
+  document.documentElement.dataset.sumber = dekat ? "dekat" : "jauh";
+  console.info(`[data] sumber ${dekat ? "LOKAL" : "menumpang"}, ${base}`);
+}
+window.__sumberData = () => DATA_BASE;
 // Layer tambahan (siklon, ITCZ, isobar, monsun, Skew-T, level stratosfer) cuma
 // ada di pipeline GFS. Di WRF berkasnya memang tak dibuat, jadi tombolnya
 // disembunyikan daripada dibiarkan mengejar 404.
@@ -2456,14 +2506,15 @@ async function init() {
     if (!boleh) { location.replace(location.pathname); return; }
   }
   try {
-    const catRes = await fetch(DATA_BASE + "catalog.json");
     // MODE KOSONG. Salinan untuk ditinjau dan salinan yang baru dipasang di
     // server memang dikirim TANPA data model, sebab keluaran pipeline itu
     // ratusan MB dan tidak pantas masuk repo. Tanpa penjagaan ini yang muncul
     // pesan merah "Gagal memuat data", padahal tidak ada yang gagal, datanya
     // memang belum pernah dimasak. 404 dibedakan dari galat lain dengan
     // sengaja, sebab 500 atau JSON rusak itu memang kerusakan sungguhan.
-    if (catRes.status === 404) { modeKosong(); return; }
+    // ambilKatalog() memulangkan null cuma kalau SEMUA sumber menjawab 404.
+    const catRes = await ambilKatalog();
+    if (!catRes) { modeKosong(); return; }
     if (!catRes.ok) throw new Error(`catalog.json HTTP ${catRes.status} (${DATA_BASE}catalog.json)`);
     const cat = await catRes.json();
     catalog = cat;
