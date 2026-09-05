@@ -45,7 +45,6 @@ Biar kalian punya gambaran utuh dan tidak salah taruh.
 ```
 atmosight/data/output/gfs/                    GFS 28 km
 atmosight/data/output/wrfchem_9km_meteo/      PUNYA KALIAN, meteorologi
-atmosight/data/output/wrf_citarum/            arsip, belum dinyalakan
 
 smokewatch/data/output/cams/                  CAMS 44 km
 smokewatch/data/output/wrfchem_9km_kimia/     PUNYA KALIAN, kimia
