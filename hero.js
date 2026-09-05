@@ -455,6 +455,96 @@
 
   function frame(time) { drawConc(time); if (wCtx) drawWind(time); }
 
+  /* =====================================================================
+     GELUNG GAMBAR. Dulu satu baris, `tick(t){ frame(t); rAF(tick) }`, dan
+     itu sumber utama halaman terasa berat.
+
+     Tiga hal yang salah di sana.
+     1. Dia TIDAK PERNAH berhenti. Hero cuma setinggi satu layar, tapi
+        gelungnya tetap menggambar penuh waktu orang sudah membaca Showcase
+        atau Team jauh di bawahnya. Jatah gambar yang terpakai di situ persis
+        jatah yang bikin gulirannya tersendat.
+     2. Dia menggambar 60 kali sedetik, padahal datanya cuma 72 bingkai
+        berjarak 250 ms, jadi 4 bingkai sedetik, sisanya interpolasi. 30 kali
+        sedetik sudah jauh di atas yang dibutuhkan untuk melihat geraknya
+        mulus, dan biayanya separuh.
+     3. Waktunya diambil dari jam halaman. Begitu gelungnya boleh berhenti,
+        itu jadi salah, medannya akan meloncat sejauh lama berhentinya.
+        Sekarang jamnya sendiri dan cuma bertambah selagi menggambar.
+     ===================================================================== */
+  var FPS = 30, SELA = 1000 / FPS;
+  var jam = 0, tLalu = 0, tGambar = -1e9, rafId = 0, sedangJalan = false;
+
+  /* Penilai biaya. Kalau mesinnya memang tidak sanggup, lebih baik menggambar
+     sedikit lebih kasar daripada tersendat. Sel kasarnya dinaikkan dari 2 ke
+     3 piksel, biayanya turun 2,25 kali, dan karena hasilnya toh sudah
+     diperbesar dengan penghalusan, yang berubah cuma ketajaman tepi pita.
+     SEKALI JALAN saja, tidak pernah balik, supaya tidak berayun di ambang. */
+  var berat = 0, sudahDikasarkan = false;
+  function nilaiBiaya(ms) {
+    if (sudahDikasarkan || fs >= 3) return;
+    berat = ms > 14 ? berat + 1 : 0;
+    if (berat < 12) return;                 /* 12 bingkai berat berturut turut */
+    sudahDikasarkan = true;
+    fs = 3;
+    resize();
+  }
+
+  function tick(t) {
+    rafId = requestAnimationFrame(tick);
+    if (!tLalu) tLalu = t;
+    var dt = t - tLalu;
+    tLalu = t;
+    /* Balik dari tab lain atau dari bagian bawah halaman. Jangan biarkan satu
+       selisih raksasa melompatkan medannya. */
+    if (dt > 200) dt = SELA;
+    jam += dt;
+    if (t - tGambar < SELA - 1) return;
+    tGambar = t;
+    var t0 = performance.now();
+    frame(jam);
+    nilaiBiaya(performance.now() - t0);
+  }
+
+  function mulai() {
+    if (sedangJalan || !DATA) return;
+    sedangJalan = true;
+    tLalu = 0;
+    rafId = requestAnimationFrame(tick);
+  }
+  function henti() {
+    if (!sedangJalan) return;
+    sedangJalan = false;
+    cancelAnimationFrame(rafId);
+    rafId = 0;
+  }
+
+  /* Hero terlihat atau tidak. Diberi margin sedikit supaya sudah jalan lagi
+     sepersekian layar sebelum betul betul kelihatan, bukan pas mepet.
+     visibilitychange dipasang juga. rAF memang sudah berhenti sendiri di tab
+     yang tersembunyi, tapi tanpa ini jamnya ikut jalan terus dan medannya
+     meloncat waktu tabnya dibuka lagi. */
+  var heroTampak = true;
+  function nilaiUlang() {
+    if (reduce) return;
+    if (heroTampak && document.visibilityState !== "hidden") mulai(); else henti();
+  }
+  if (typeof IntersectionObserver === "function") {
+    new IntersectionObserver(function (e) {
+      heroTampak = e[0].isIntersecting;
+      nilaiUlang();
+    }, { rootMargin: "150px 0px" }).observe(host);
+  }
+  document.addEventListener("visibilitychange", nilaiUlang);
+
+  /* Kail buat verifikasi gelungnya, sejalan dengan __heroMap di bawah.
+     Dipakai untuk membuktikan gelungnya betul betul berhenti waktu hero
+     tidak terlihat, sebab itu tidak bisa dilihat dari tangkapan layar
+     maupun dari dump DOM. */
+  window.__heroStatus = function () {
+    return { jalan: sedangJalan, fs: fs, jam: Math.round(jam), tampak: heroTampak };
+  };
+
   /* Kail buat verifikasi, dipakai waktu mengadu posisi titik biru dengan
      posisi huruf. Sama gunanya dengan window.__heroTl di anim.js. */
   window.__heroMap = function () {
@@ -503,6 +593,6 @@
     fine = new Float32Array(FW * FH); rowbuf = new Float32Array(FW * SH);
     siapkanBobot();
     if (reduce) frame(4000);
-    else (function tick(t) { frame(t); requestAnimationFrame(tick); })(0);
+    else nilaiUlang();
   }).catch(function (e) { console.error("gagal memuat pm25-frames.json", e); });
 })();

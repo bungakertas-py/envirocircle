@@ -448,6 +448,15 @@ section { padding: 30px 0; }
   pointer-events: none;
 }
 .sc-bingkai.siap { opacity: 1; }
+/* Bingkai yang sedang DIJEDA. display:none, BUKAN visibility atau opacity.
+   Cuma display:none yang membuat dokumen di dalam iframe tidak punya
+   kesempatan menggambar, dan itu yang menghentikan gelung partikel di
+   dalamnya. visibility:hidden dan opacity:0 tetap membiarkannya menggambar
+   penuh, cuma hasilnya tidak ditampilkan, jadi tidak menghemat apa apa.
+   App-nya TIDAK dimuat ulang, dokumennya tetap hidup di memori, jadi bangun
+   lagi tidak menarik data apa pun.
+   Kapan dipasangnya diatur anim.js, lihat blok JEDA di sana. */
+.sc-bingkai.jeda { display: none; }
 /* Tudung penadah klik. Menutup seluruh kartu di atas bingkai, dan karena dia
    di dalam <a>, klik di mana pun membuka app-nya. Sekalian ini yang bikin
    tombol tombol di dalam kartu tidak berfungsi, tanpa perlu melumpuhkan

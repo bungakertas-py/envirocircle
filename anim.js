@@ -570,6 +570,57 @@
     skala();
   }
 
+  /* ---- JEDA. App di dalam kartu itu app SUNGGUHAN ----
+     Lengkap dengan gelung partikel anginnya sendiri, dan gelung itu jalan
+     terus selama iframe-nya masih dirender. Artinya waktu orang sudah
+     membaca bagian Team, di belakangnya masih ada satu atau dua peta penuh
+     yang sibuk menggambar partikel. Itu yang ikut membuat gulirannya
+     tersendat, dan itu pekerjaan yang tidak dilihat siapa pun.
+
+     `display:none` membuat dokumen di dalam iframe tidak punya kesempatan
+     menggambar, jadi requestAnimationFrame di dalamnya BERHENTI SENDIRI,
+     tanpa memuat ulang app-nya dan tanpa perlu menyentuh kode app-nya.
+     Posternya yang muncul menggantikan.
+
+     Dua aturan kapan dijeda.
+     1. Seluruh bagian Showcase di luar layar. Aman, tidak ada yang melihat
+        pertukarannya.
+     2. Kartu yang BUKAN kartu aktif. Yang itu cuma mengintip seperdelapan
+        lebar dan sudah diredupkan jadi 45 persen, jadi memutar app hidup di
+        situ hampir tidak terbaca sebagai apa pun. Ditunda sampai geserannya
+        selesai, supaya pertukarannya tidak jatuh di tengah gerak. */
+  var showcaseTampak = true, waktuJeda = 0;
+
+  function pasangJeda() {
+    slide.forEach(function (s, i) {
+      var f = s.querySelector(".sc-bingkai");
+      if (f) f.classList.toggle("jeda", !showcaseTampak || i !== idx);
+    });
+  }
+  /* Kail buat verifikasi, sejalan dengan __heroStatus di hero.js. Jeda ini
+     tidak bisa dilihat dari tangkapan layar, sebab yang muncul menggantikan
+     justru posternya yang memang mirip. */
+  window.__scStatus = function () {
+    var k = korsel.getBoundingClientRect();
+    return {
+      tampak: showcaseTampak, idx: idx,
+      korsel: Math.round(k.top) + ".." + Math.round(k.bottom),
+      bingkai: slide.map(function (s) {
+        var f = s.querySelector(".sc-bingkai");
+        return f ? f.className : "-";
+      }).join(" | ")
+    };
+  };
+
+  /* Kartu aktif dibangunkan seketika, yang lain baru dijeda setelah gerak
+     korselnya reda. */
+  function jadwalJeda() {
+    var f = slide[idx] && slide[idx].querySelector(".sc-bingkai");
+    if (f && showcaseTampak) f.classList.remove("jeda");
+    clearTimeout(waktuJeda);
+    waktuJeda = setTimeout(pasangJeda, 700);
+  }
+
   /* Bingkainya dirender 1400 px lalu dikecilkan. Lebar kartu ikut vw, jadi
      angkanya dihitung ulang tiap kali korselnya diukur ulang. */
   function skala() {
@@ -596,6 +647,7 @@
     ukur();
     hidupkan(idx);
     skala();
+    jadwalJeda();
     var x = posisi(idx);
     if (langsung || pelan || typeof gsap === "undefined") {
       rel.style.transform = "translateX(" + x + "px)";
@@ -645,17 +697,38 @@
      Kalau dimuat di awal, dua app ikut berebut jalur dengan hero yang justru
      hal pertama yang dilihat orang. Cadangan kalau IntersectionObserver tak
      ada, langsung hidupkan saja, browser tanpa dia sudah sangat tua. */
-  var seksi = document.getElementById("showcase") || korsel;
+  /* Yang diamati KORSELNYA, bukan seluruh bagian #showcase. Terukur, bagian
+     itu tingginya 1404 px sedangkan halamannya cuma 3140 px, jadi waktu
+     digulir sampai mentok pun tepi bawahnya masih tersisa 72 px di dalam
+     layar. Kalau bagian itu yang diamati, kartunya TIDAK PERNAH dijeda di
+     layar desktop, padahal petanya sendiri sudah lama lewat jauh di atas.
+     Korselnya jauh lebih pendek dan betul betul keluar layar. */
+  var seksi = korsel || document.getElementById("showcase");
   if (!bolehHidup) {
     /* tidak ada yang perlu dipasang, poster diam sudah jadi tampilan akhir */
   } else if (typeof IntersectionObserver === "function") {
-    var mata = new IntersectionObserver(function (entri) {
+    /* DUA pengamat, bukan satu, dan itu disengaja.
+
+       Memuat dan menjeda mau margin yang berbeda. Memuat harus DULUAN,
+       kartunya perlu waktu menarik data dan menggambar peta, jadi 300 px
+       sebelum kelihatan. Menjeda harus BELAKANGAN, jangan sampai kartunya
+       dimatikan padahal masih tersisa sejengkal di tepi layar.
+
+       Kalau dipaksa satu pengamat, marginnya harus dipilih salah satu dan
+       yang kalah jadi cacat. Terukur dengan margin 300 px, di jendela
+       1600x1000 korsel berhenti 224 px di atas layar waktu halamannya sudah
+       mentok, masih di dalam pita 300 px itu, jadi kartunya TIDAK PERNAH
+       dijeda. Halaman ini memang cuma 3140 px, tidak cukup panjang. */
+    new IntersectionObserver(function (entri) {
       if (!entri[0].isIntersecting) return;
-      mata.disconnect();
       terlihat = true;
       hidupkan(idx);
-    }, { rootMargin: "200px 0px" });
-    mata.observe(seksi);
+    }, { rootMargin: "300px 0px" }).observe(seksi);
+
+    new IntersectionObserver(function (entri) {
+      showcaseTampak = entri[0].isIntersecting;
+      pasangJeda();
+    }, { rootMargin: "60px 0px" }).observe(seksi);
   } else {
     terlihat = true;
     hidupkan(idx);
